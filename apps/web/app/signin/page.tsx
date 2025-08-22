@@ -1,8 +1,7 @@
 import Image from 'next/image';
-import Link from 'next/link';
-import { LuArrowRight } from 'react-icons/lu';
+import GoogleSignInButton from '../components/SignIn_Google_Button';
 
-const page = () => {
+const signin = () => {
   return (
     <div className=' h-full grid grid-cols-12 bg-primary-bg'>
       <div className='px-4  flex flex-col gap-y-8 justify-center  col-span-6'>
@@ -10,13 +9,7 @@ const page = () => {
           <p className='text-primary-btn'>Real-Time Conversations,</p>
           Made Simple
         </h2>
-        <Link
-          href={'/signin'}
-          className='w-fit flex items-center gap-x-4   px-6 py-3  text-xl font-medium text-secondary-text rounded-full border-4 border-primary-border transition-all duration-500  ease-in-out hover:scale-110 hover:text-primary-text bg-primary-bg'
-        >
-          Get Started
-          <LuArrowRight className='text-2xl' />
-        </Link>
+        <GoogleSignInButton />
       </div>
       <div className='bg-primary-bg relative col-span-6'>
         <Image
@@ -31,4 +24,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default signin;
