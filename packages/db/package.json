@@ -1,20 +1,19 @@
 {
   "name": "@repo/db",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
+    "build": "tsc -b",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev --skip-generate",
-    "deploy": "prisma migrate deploy"
+    "deploy": "prisma migrate deploy",
+    "studio":"prisma studio"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^6.14.0"
   },

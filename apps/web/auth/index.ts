@@ -1,20 +1,40 @@
-import NextAuth, { type NextAuthResult } from 'next-auth';
+import NextAuth, { NextAuthConfig, type NextAuthResult } from 'next-auth';
 import Google from 'next-auth/providers/google';
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import { dbClient } from '@repo/db';
 
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      phone?: string | null; 
+    };
+  }
+}
 
-const result = NextAuth({
-  providers: [
-    Google({
-      authorization: {
-        params: {
-          prompt: 'consent',
-          access_type: 'offline',
-          response_type: 'code',
-        },
-      },
-    }),
-  ],
-});
+const authOptions: NextAuthConfig = {
+  adapter: PrismaAdapter(dbClient),
+  providers: [Google({})],
+  session: {
+    strategy: 'database',
+    maxAge: 60 * 120, // 2 hours
+  },
+  callbacks: {
+    async session({ session, user }) {
+      const dbUser = await dbClient.user.findUnique({
+        where: { email: user.email! },
+      });
+
+      session.user.phone = dbUser?.phone ?? null;
+      return session;
+    },
+  },
+};
+
+const result = NextAuth(authOptions);
 
 export const handlers: NextAuthResult['handlers'] = result.handlers;
 export const auth: NextAuthResult['auth'] = result.auth;

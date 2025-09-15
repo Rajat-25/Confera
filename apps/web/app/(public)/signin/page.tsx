@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import GoogleSignInButton from '../components/SignIn_Google_Button';
+import GoogleSignInButton from '../../../components/SignIn_Google_Button';
 
 const signin = () => {
   return (

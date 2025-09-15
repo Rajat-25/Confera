@@ -7,6 +7,7 @@ interface ButtonProps {
   className?: string;
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
 }
 
 export const Button = ({
@@ -14,9 +15,15 @@ export const Button = ({
   className = '',
   type = 'button',
   onClick,
+  disabled = false,
 }: ButtonProps) => {
   return (
-    <button type={type} className={`${className}`} onClick={onClick}>
+    <button
+      disabled={disabled}
+      type={type}
+      className={`${className}`}
+      onClick={onClick}
+    >
       {children}
     </button>
   );

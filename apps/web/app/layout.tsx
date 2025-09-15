@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import Provider from '../providers';
-import Navbar from './components/Navbar';
+import Navbar from '../components/Navbar';
 import './globals.css';
 
 const geistSans = localFont({
@@ -25,7 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} bg-primary-bg`}
+      >
         <div className='h-screen flex flex-col'>
           <Provider>
             <Navbar />
