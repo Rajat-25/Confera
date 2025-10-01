@@ -1,7 +1,7 @@
 import { auth } from '@/auth';
+import { urlPath } from '@repo/lib';
 import Link from 'next/link';
 import LogoutButton from './LogoutButton';
-import { urlPath } from '@repo/lib';
 
 const Navbar = async () => {
   const session = await auth();

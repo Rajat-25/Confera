@@ -2,12 +2,13 @@ import { ChatContentPropsType } from '@repo/types';
 
 const ChatContent = ({ currChats, userId }: ChatContentPropsType) => {
   let content;
+
   if (!currChats || currChats.length === 0) {
     content = <p className='text-center text-gray-400'>No messages yet</p>;
   } else {
     content = (
       <>
-        {currChats?.map((chat) => {
+        {currChats.map((chat) => {
           const isSender = chat.senderId === userId;
 
           return (

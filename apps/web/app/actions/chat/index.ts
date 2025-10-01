@@ -1,28 +1,28 @@
 'use server';
 
-import { z } from 'zod';
-import { Chat, Conversation, dbClient, User } from '@repo/db';
-import { isUserAuthorized } from '../shared';
 import { phoneSchema } from '@/utils';
+import { dbClient } from '@repo/db';
 import {
-  conversationType,
-  ConversationWithParticipants,
   GetAllConversationsIdResponse,
   GetAllConversationsResponse,
   GetUserChatResponse,
+  MappedConversationType
 } from '@repo/types';
+import { z } from 'zod';
+import { isUserAuthorized } from '../shared';
 
 const chatSchema = z.object({
   contactId: z.string('Invalid contact id'),
 });
 
-export const GetAllConversationsId =
+export const GetAllMappedConversation =
   async (): Promise<GetAllConversationsIdResponse> => {
-    const { success: authSuccess, userId } = await isUserAuthorized();
+    const { success: authSuccess, data } = await isUserAuthorized();
 
-    if (!authSuccess || !userId) {
-      return { success: false, message: 'User not authorized' };
+    if (!authSuccess || !data?.userId) {
+      return { success: false, message: 'User not authorized', data: null };
     }
+    const { userId } = data;
 
     try {
       const conversations = await dbClient.conversation.findMany({
@@ -31,6 +31,9 @@ export const GetAllConversationsId =
         },
         select: {
           id: true,
+          lastMessage: true,
+          lastMessageAt: true,
+          lastMessageById: true,
           participants: {
             where: { id: { not: userId } },
             select: { phone: true },
@@ -38,40 +41,50 @@ export const GetAllConversationsId =
         },
       });
 
-      const conversationMap: Record<string, string> = {};
+      const dbMappedConversation: MappedConversationType = {};
 
       conversations.forEach((conv) => {
         const otherParticipant = conv.participants[0];
+
         if (otherParticipant && otherParticipant.phone) {
-          conversationMap[otherParticipant.phone] = conv.id;
+          dbMappedConversation[otherParticipant.phone] = {
+            id: conv.id,
+            lastMessage: conv.lastMessage,
+            lastMessageAt: conv.lastMessageAt,
+            lastMessageById: conv.lastMessageById,
+          };
         }
       });
 
       return {
         success: true,
         message: 'Conversations fetched',
-        data: conversationMap,
+        data: dbMappedConversation,
       };
     } catch (err) {
-      return { success: false, message: 'Internal Server error' };
+      return { success: false, message: 'Internal Server error', data: null };
     }
   };
 
-export async function GetUserChat(phone: string): Promise<GetUserChatResponse> {
-  const { success, userId } = await isUserAuthorized();
+export const GetUserChat = async (
+  phone: string
+): Promise<GetUserChatResponse> => {
+  const { success, data } = await isUserAuthorized();
 
-  if (!success || !userId) {
+  if (!success || !data?.userId) {
     return { success: false, message: 'User not authorized' };
   }
+  const { userId } = data;
 
-  const { success: schemSuccess, data } = phoneSchema.safeParse(phone);
+  const { success: schemSuccess, data: parsedData } =
+    phoneSchema.safeParse(phone);
 
   if (!schemSuccess) {
     return { success: false, message: 'Invalid phone number' };
   }
 
   const contact = await dbClient.user.findUnique({
-    where: { phone: data },
+    where: { phone: parsedData },
   });
 
   if (!contact) {
@@ -92,7 +105,7 @@ export async function GetUserChat(phone: string): Promise<GetUserChatResponse> {
         },
       },
       orderBy: {
-        createdAt: 'asc', 
+        createdAt: 'asc',
       },
       select: {
         id: true,
@@ -107,40 +120,42 @@ export async function GetUserChat(phone: string): Promise<GetUserChatResponse> {
   } catch (err) {
     return { success: false, message: 'Internal Server error' };
   }
-}
+};
 
-export async function GetAllConversations(): Promise<GetAllConversationsResponse> {
-  const { success, userId, userPhone } = await isUserAuthorized();
+export const GetAllConversations =
+  async (): Promise<GetAllConversationsResponse> => {
+    const { success, data } = await isUserAuthorized();
 
-  if (!success || !userId) {
-    return { success: false, message: 'User not authorized' };
-  }
+    if (!success || !data?.userId) {
+      return { success: false, message: 'User not authorized' };
+    }
+    const { userId } = data;
 
-  try {
-    const conversations = await dbClient.conversation.findMany({
-      where: {
-        participants: {
-          some: { id: userId },
+    try {
+      const conversations = await dbClient.conversation.findMany({
+        where: {
+          participants: {
+            some: { id: userId },
+          },
         },
-      },
-      select: {
-        id: true,
-        lastMessage: true,
-        lastMessageById: true,
-        lastMessageAt: true,
-        participants: {
-          where: { id: { not: userId } },
-          select: { name: true, phone: true, email: true },
+        select: {
+          id: true,
+          lastMessage: true,
+          lastMessageById: true,
+          lastMessageAt: true,
+          participants: {
+            where: { id: { not: userId } },
+            select: { name: true, phone: true, email: true },
+          },
         },
-      },
-    });
+      });
 
-    return {
-      success: true,
-      data: conversations,
-      message: 'Chats fetched successfully',
-    };
-  } catch (err) {
-    return { success: false, message: 'Internal Server error' };
-  }
-}
+      return {
+        success: true,
+        data: conversations,
+        message: 'Chats fetched successfully',
+      };
+    } catch (err) {
+      return { success: false, message: 'Internal Server error' };
+    }
+  };

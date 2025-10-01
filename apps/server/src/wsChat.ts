@@ -1,31 +1,15 @@
 import { WS_CONST } from '@repo/lib';
-import { GenPayloadType, UserContextType } from '@repo/types';
+import { GenPayloadType } from '@repo/types';
 import { Server } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
-import { chatAuth } from './chat/chatAuth.js';
-import { chatHandler } from './chat/chatHandler.js';
-import { DisconnectHandler } from './chat/disconnectHandler.js';
-import { userStatus } from './chat/userStatus.js';
+import { chatAuth } from './chat/chatAuth';
+import { chatHandler } from './chat/chatHandler';
+import { disconnectHandler } from './chat/disconnectHandler';
+import { userStatus } from './chat/userStatus';
+import { broadcastStatusToContactsPropsType } from './types';
+import { typingHandler } from './chat/typingHandler';
 
-declare module 'ws' {
-  interface WebSocket {
-    userContext?: UserContextType;
-  }
-}
-
-type ContactsDbType = {
-  phone: string;
-};
-
-const {
-  AUTH_INIT,
-  AUTH_SUCCESS,
-  AUTH_FAILED,
-  CHAT,
-  USER_STATUS,
-  ERROR,
-  DISCONNECT,
-} = WS_CONST;
+const { AUTH_INIT, CHAT, TYPING, USER_STATUS, ERROR, DISCONNECT } = WS_CONST;
 
 export class WsChatSingleton {
   private static instance: WsChatSingleton | null = null;
@@ -40,20 +24,19 @@ export class WsChatSingleton {
         try {
           const data = JSON.parse(val.toString());
           const { type, payload } = data;
-          const { userContext } = ws;
 
-          if (type === AUTH_INIT && !userContext) {
+          if (type === AUTH_INIT && !ws.userContext) {
             await chatAuth({
               ws,
               payload,
               ClientMapping: this.ClientMapping,
-              broadcastStatusToContacts: this.broadcastStatusToContacts,
+              broadcastStatusToContacts:
+                this.broadcastStatusToContacts.bind(this),
             });
-          } else if (type === CHAT && userContext?.userId) {
+          } else if (type === CHAT && ws.userContext?.userId) {
             await chatHandler({
               ws,
               payload,
-              userContext,
               ClientMapping: this.ClientMapping,
               sendMsgToClient: this.sendMsgToClient.bind(this),
             });
@@ -63,14 +46,20 @@ export class WsChatSingleton {
               payload,
               ws,
             });
+          } else if (type === TYPING) {
+            typingHandler({ ws, ClientMapping: this.ClientMapping, payload });
           } else if (type == DISCONNECT) {
-            await DisconnectHandler();
+            await disconnectHandler({
+              ws,
+              broadcastStatusToContacts:
+                this.broadcastStatusToContacts.bind(this),
+            });
           }
         } catch (err: any) {
           const msg = err instanceof Error ? err.message : String(err);
           console.error('WS Error ❌:', msg);
 
-          ws.send(
+          return ws.send(
             JSON.stringify({ type: ERROR, message: 'Internal Server error' })
           );
         }
@@ -81,12 +70,10 @@ export class WsChatSingleton {
       });
 
       ws.on('close', () => {
-        console.log(`Client ${ws.userContext?.userId} disconnected ❌`);
+        console.log(`User ${ws.userContext?.phone} disconnected ❌`);
 
         if (ws.userContext) {
-          this.ClientMapping.forEach((socket, phone) => {
-            if (socket === ws) this.ClientMapping.delete(phone);
-          });
+          this.ClientMapping.delete(ws.userContext.phone);
           ws.userContext = undefined;
         }
       });
@@ -99,23 +86,26 @@ export class WsChatSingleton {
     }
   }
 
-  private broadcastStatusToContacts(contacts: ContactsDbType[], phone: string) {
-    const userStatusPayload = {
-      statusOf: phone,
-      status: 'online',
-    };
-
-    contacts.forEach((contact) => {
+  private broadcastStatusToContacts({
+    contacts,
+    status,
+    phone,
+  }: broadcastStatusToContactsPropsType) {
+    contacts.forEach((contact: any) => {
       const receiverClient = this.ClientMapping.get(contact.phone);
       if (receiverClient && receiverClient?.readyState === WebSocket.OPEN) {
         receiverClient.send(
           JSON.stringify({
             type: USER_STATUS,
-            payload: userStatusPayload,
+            payload: {
+              statusOf: phone,
+              status,
+            },
           })
         );
       }
     });
+    return;
   }
 
   static getInstance(server: Server) {

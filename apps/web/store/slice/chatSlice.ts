@@ -1,38 +1,28 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   ChatSliceStateType,
   ChatType,
+  ConversationPayload,
   CurrentChatContactType,
-  NewConversationPayload,
-  UserContactType,
+  MappedConversationType,
+  TypingPayloadResponseType
 } from '@repo/types';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 const initialState: ChatSliceStateType = {
   currentChat: [],
-  userChats: [],
-  conversationMap: {},
   currentChatContact: null,
+  userChats: [],
+  mappedConversation: {},
+  isUserTyping: false,
 };
 
 const chatSlice = createSlice({
   name: 'chat_slice',
   initialState,
   reducers: {
-    setConversationMap: (
-      state,
-      action: PayloadAction<Record<string, string>>
-    ) => {
-      state.conversationMap = action.payload;
+    setIsUserTyping: (state, action: PayloadAction<TypingPayloadResponseType>) => {
+      state.isUserTyping = action.payload.isTyping;
     },
-
-    addToConversationMap: (
-      state,
-      action: PayloadAction<NewConversationPayload>
-    ) => {
-      state.conversationMap[action.payload.phone] =
-        action.payload.conversationId;
-    },
-
     setCurrentChatContact: (
       state,
       action: PayloadAction<CurrentChatContactType>
@@ -40,12 +30,29 @@ const chatSlice = createSlice({
       state.currentChatContact = action.payload;
     },
 
+    setConversationMap: (
+      state,
+      action: PayloadAction<MappedConversationType>
+    ) => {
+      state.mappedConversation = { ...action.payload };
+    },
+    addToConversationMap: (
+      state,
+      action: PayloadAction<ConversationPayload>
+    ) => {
+      const { phone, conversation } = action.payload;
+      state.mappedConversation[phone] = {
+        ...state.mappedConversation[phone],
+        ...conversation,
+      };
+    },
+
     setUserChats: (state, action: PayloadAction<ChatType[]>) => {
       state.userChats = action.payload;
     },
 
     addToCurrentChat: (state, action: PayloadAction<ChatType>) => {
-      state.currentChat?.push(action.payload);
+      state.currentChat.push(action.payload);
     },
 
     setCurrentChat: (state, action: PayloadAction<ChatType[]>) => {
@@ -58,8 +65,9 @@ const chatSlice = createSlice({
     clearChatState: (state) => {
       state.currentChat = [];
       state.userChats = [];
-      state.conversationMap = {};
+      state.mappedConversation = {};
       state.currentChatContact = null;
+      state.isUserTyping = false;
     },
   },
 });
@@ -73,6 +81,7 @@ export const {
   addToCurrentChat,
   setCurrentChatContact,
   clearChatState,
+  setIsUserTyping,
 } = chatSlice.actions;
 
 export default chatSlice;

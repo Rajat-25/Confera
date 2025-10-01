@@ -1,19 +1,69 @@
 'use server';
 
-import { DeleteContactSchemaType, EditContactSchemaType } from '@/utils';
-import { contactSchema, DeleteContactSchema, EditContactSchema } from '@/utils';
+import {
+  contactSchema,
+  DeleteContactSchema,
+  DeleteContactSchemaType,
+  EditContactSchema,
+  EditContactSchemaType,
+} from '@/utils';
 import { dbClient } from '@repo/db';
+import {
+  GetAllMappedContactsResponseType,
+  GetUserContactsResponse,
+  MappedContactType,
+} from '@repo/types';
 import { revalidatePath } from 'next/cache';
 import { isUserAuthorized } from '../shared';
 
+export const GetAllMappedContacts =
+  async (): Promise<GetAllMappedContactsResponseType> => {
+    try {
+      const { success, data } = await isUserAuthorized();
 
+      if (!success || !data?.userId) {
+        return { success: false, message: 'User not authorized', data: null };
+      }
+      const { userId } = data;
 
-export async function AddContact(formData: any) {
-  const { success, userId } = await isUserAuthorized();
+      const { success: contactSuccess, data: contactData } =
+        await GetUserContacts();
+      if (!contactSuccess || !contactData) {
+        return {
+          success: false,
+          message: 'Error fetching contacts',
+          data: null,
+        };
+      }
 
-  if (!success || !userId) {
+      const mappedContacts: MappedContactType = {};
+
+      contactData?.forEach((contact) => {
+        const data = {
+          phone: contact.phone,
+          fullName: contact.fullName,
+        };
+
+        return Object.assign(mappedContacts, { [contact.phone]: data });
+      });
+
+      return {
+        success: true,
+        message: 'Mapped Contacts fetched successfully',
+        data: mappedContacts,
+      };
+    } catch (err) {
+      return { success: false, message: 'Error fetching data', data: null };
+    }
+  };
+
+export const AddContact = async (formData: any) => {
+  const { success, data } = await isUserAuthorized();
+
+  if (!success || !data?.userId) {
     return { success: false, message: 'User not authorized' };
   }
+  const { userId } = data;
   const result = contactSchema.safeParse(formData);
 
   if (!result.success) {
@@ -31,16 +81,17 @@ export async function AddContact(formData: any) {
 
   revalidatePath('/contacts');
   return { success: true, message: 'Contact added successfully' };
-}
+};
 
-export async function EditContact(data: EditContactSchemaType) {
-  const { success, userId } = await isUserAuthorized();
+export const EditContact = async (val: EditContactSchemaType) => {
+  const { success, data } = await isUserAuthorized();
 
-  if (!success || !userId) {
+  if (!success || !data?.userId) {
     return { success: false, message: 'User not authorized' };
   }
+  const { userId } = data;
 
-  const parsed = EditContactSchema.safeParse(data);
+  const parsed = EditContactSchema.safeParse(val);
 
   if (!parsed.success) {
     return { success: false, errors: parsed.error.issues };
@@ -60,16 +111,17 @@ export async function EditContact(data: EditContactSchemaType) {
 
   revalidatePath('/contacts');
   return { success: true, message: 'Contact updated successfully' };
-}
+};
 
-export async function DeleteContact(data: DeleteContactSchemaType) {
-  const { success, userId } = await isUserAuthorized();
+export const DeleteContact = async (val: DeleteContactSchemaType) => {
+  const { success, data } = await isUserAuthorized();
 
-  if (!success || !userId) {
+  if (!success || !data?.userId) {
     return { success: false, message: 'User not authorized' };
   }
+  const { userId } = data;
 
-  const parsed = DeleteContactSchema.safeParse(data);
+  const parsed = DeleteContactSchema.safeParse(val);
   if (!parsed.success) {
     return { success: false, errors: parsed.error.issues };
   }
@@ -87,14 +139,15 @@ export async function DeleteContact(data: DeleteContactSchemaType) {
   revalidatePath('/contacts');
 
   return { success: true, message: 'Contact deleted successfully' };
-}
+};
 
-export async function GetUserContacts() {
-  const { success, userId } = await isUserAuthorized();
+export const GetUserContacts = async (): Promise<GetUserContactsResponse> => {
+  const { success, data } = await isUserAuthorized();
 
-  if (!success || !userId) {
-    return { success: false, message: 'User not authorized', contacts: [] };
+  if (!success || !data?.userId) {
+    return { success: false, message: 'User not authorized', data: null };
   }
+  const { userId } = data;
 
   try {
     const contacts = await dbClient.contact.findMany({
@@ -110,10 +163,10 @@ export async function GetUserContacts() {
 
     return {
       success: true,
-      contacts,
+      data: contacts,
       message: 'Contacts fetched successfully',
     };
   } catch (err) {
-    return { success: false, message: 'Error fetching contacts', contacts: [] };
+    return { success: false, message: 'Error fetching contacts', data: null };
   }
-}
+};

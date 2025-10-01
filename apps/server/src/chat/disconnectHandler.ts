@@ -1,14 +1,20 @@
 import { WS_CONST } from '@repo/lib';
+import { DisconnectHandlerPropsType } from '../types';
 import { GetContacts } from '../utils/helper';
 
-export const DisconnectHandler = async ({
+export const disconnectHandler = async ({
   ws,
   broadcastStatusToContacts,
-  userId,
-}: any) => {
+}: DisconnectHandlerPropsType) => {
+  const userContext = ws.userContext;
+  if (!userContext) return;
+
+  const { userId, phone } = userContext;
   const { ERROR } = WS_CONST;
-  const { data: contactData } = await GetContacts(userId);
-  if (!contactData) {
+
+  const { data: contacts, success } = await GetContacts(userId);
+
+  if (!success) {
     ws.send(
       JSON.stringify({
         type: ERROR,
@@ -20,6 +26,8 @@ export const DisconnectHandler = async ({
 
     return;
   }
-
-  broadcastStatusToContacts(contactData);
+  if (contacts?.length) {
+    broadcastStatusToContacts({ contacts, status: 'offline', phone });
+  }
+  ws.close();
 };

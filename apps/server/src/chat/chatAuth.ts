@@ -1,21 +1,6 @@
-import { Contact, dbClient } from '@repo/db';
 import { verifyWsToken, WS_CONST } from '@repo/lib';
-import WebSocket from 'ws';
+import { ChatAuthPropsType_S } from '../types';
 import { GetContacts, GetUser } from '../utils/helper';
-
-type ContactsDbType = {
-  phone: string;
-};
-
-type ChatAuthPropsType_S = {
-  ws: WebSocket;
-  payload: any;
-  ClientMapping: Map<string, WebSocket>;
-  broadcastStatusToContacts: (
-    contacts: ContactsDbType[],
-    phone: string
-  ) => void;
-};
 
 export const chatAuth = async ({
   ws,
@@ -25,31 +10,42 @@ export const chatAuth = async ({
 }: ChatAuthPropsType_S) => {
   const { AUTH_SUCCESS, AUTH_FAILED, CHAT, ERROR } = WS_CONST;
   try {
-    const { sub, jti, iat, exp } = verifyWsToken(payload.jwtToken);
+    const { success: tokenSuccess, decoded } = verifyWsToken(payload.jwtToken);
 
-    const { data: userData } = await GetUser(sub);
-    const { data: contactData } = await GetContacts(sub);
+    if (!tokenSuccess || !decoded) {
+      ws.send(
+        JSON.stringify({ type: AUTH_FAILED, message: 'Invalid/Expired Token' })
+      );
+      return ws.close();
+    }
 
-    if (!userData || !contactData) {
+    const { sub: userId } = decoded;
+
+    const [
+      { data: userData, success: userSuccess },
+      { data: contactData, success: contactSuccess },
+    ] = await Promise.all([GetUser({ userId }), GetContacts(userId)]);
+
+    if (!userSuccess || !userData || !contactSuccess) {
       ws.send(
         JSON.stringify({
           type: ERROR,
           payload: {
-            message: 'Internal server errro',
+            message: 'Internal server error',
           },
         })
       );
-      return;
+      return ws.close();
     }
 
-    const { phone, name } = userData;
+    const { phone } = userData;
 
-    if (sub && phone) {
-      ws.userContext = {
-        userId: sub,
-      };
-      ClientMapping.set(phone, ws);
-    }
+    ws.userContext = {
+      userId,
+      phone: phone!,
+    };
+
+    ClientMapping.set(phone!, ws);
 
     ws.send(
       JSON.stringify({
@@ -58,14 +54,23 @@ export const chatAuth = async ({
       })
     );
 
-    if (contactData.length && phone) {
-      broadcastStatusToContacts(contactData, phone);
+    if (contactData && contactData?.length) {
+      broadcastStatusToContacts({
+        contacts: contactData,
+        phone: phone!,
+        status: 'online',
+      });
     }
-    console.log(`\n User ${name} Connected ✔ \n `);
+    console.log(`\nUser ${phone} Connected ✔ \n `);
   } catch (err) {
     console.error('Auth error ❌:', err);
 
-    ws.send(JSON.stringify({ type: AUTH_FAILED, message: 'Auth failed' }));
+    ws.send(
+      JSON.stringify({
+        type: AUTH_FAILED,
+        payload: { message: 'Internal server error' },
+      })
+    );
     ws.close();
   }
 };

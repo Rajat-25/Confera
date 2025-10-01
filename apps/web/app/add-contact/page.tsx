@@ -3,8 +3,10 @@ import { Button } from '@repo/ui/button';
 import { FormEvent, useActionState, useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { AddUserPhoneNo } from '../actions/user';
-import { phoneSchema, urlPath } from '@/utils';
-import { signOut } from "next-auth/react"
+import { urlPath } from '@repo/lib';
+import { phoneSchema } from '@/utils';
+
+import { signOut } from 'next-auth/react';
 
 export default function AddContactForm() {
   const [formState, formAction] = useActionState(AddUserPhoneNo, null);
@@ -44,7 +46,6 @@ export default function AddContactForm() {
         <div className='mb-4'>
           <label className='block text-gray-300 mb-2'>Phone No.</label>
           <input
-  
             type='tel'
             name='phone'
             placeholder='Enter phone no.'

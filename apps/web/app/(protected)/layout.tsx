@@ -2,18 +2,15 @@ import { auth } from '@/auth';
 import { urlPath } from '@repo/lib';
 import { redirect } from 'next/navigation';
 import { getUserPhoneNo } from '../actions/user';
+import { ReactNode } from 'react';
 
 export default async function ProtectedLayout({
   children,
-  params,
 }: {
-  children: React.ReactNode;
-  params: { slug?: string };
+  children: ReactNode;
 }) {
-  const pathname = params.slug ? `/protected/${params.slug}` : '/protected';
-
-  const session = await auth();
   const { signin, addContact } = urlPath;
+  const session = await auth();
 
   if (!session || !session.user) {
     redirect(signin);

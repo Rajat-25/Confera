@@ -1,33 +1,27 @@
-import {
-  GetAllConversations,
-  GetAllConversationsId,
-  GetUserChat,
-} from '@/app/actions/chat';
+import { GetAllMappedConversation, GetUserChat } from '@/app/actions/chat';
+import { GetAllMappedContacts } from '@/app/actions/contact';
 import { auth } from '@/auth';
 import ChatList from '@/components/chat/ChatList';
 import ChatWindow from '@/components/chat/ChatWindow';
 
 const page = async () => {
   const session = await auth();
-  const userPhone = session?.user.phone!;
   const userId = session?.user.id!;
 
-  const { data: conversationMapDB = {} } = await GetAllConversationsId();
-  const { data: conversations } = await GetAllConversations();
+  const { success: conversationSuccess, data: dbMappedConversations } =
+    await GetAllMappedConversation();
+  const { success: contactSuccess, data: dbMappedContacts } =
+    await GetAllMappedContacts();
 
   return (
     <div className='h-full p-6'>
       <div className=' h-full rounded-xl gap-x-2 grid grid-cols-12'>
         <ChatList
           userId={userId}
-          userPhone={userPhone}
-          conversations={conversations}
+          dbMappedContacts={dbMappedContacts}
+          dbMappedConversations={dbMappedConversations}
         />
-        <ChatWindow
-          conversationMapDB={conversationMapDB}
-          userId={userId}
-          GetUserChat={GetUserChat}
-        />
+        <ChatWindow userId={userId} GetUserChat={GetUserChat} />
       </div>
     </div>
   );

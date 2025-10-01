@@ -1,3 +1,10 @@
+export type IsUserAuthorizedResponse = GeneralResponseType & {
+  data?: {
+    userId: string;
+    userPhone: string | null | undefined;
+  };
+};
+
 export type ContactType = {
   fullName: string;
   email: string | null;
@@ -5,25 +12,33 @@ export type ContactType = {
   id: string;
 };
 
+export type CurrentChatContactType = Pick<ContactType, 'fullName' | 'phone'>;
+
+export type ContactListPropsType = {
+  contacts: ContactType[];
+};
+
+export type GetUserContactsResponse = GeneralResponseType & {
+  data: ContactType[] | null;
+};
+
 export type GenPayloadType = {
   type: string;
   payload: any;
 };
 
+export type StatusType = 'online' | 'offline';
+
 export type UserStatusPayloadType = {
   statusOf: string;
-  status: 'online' | 'offline';
+  status: StatusType;
 };
 
-export type UserContactType = {
-  id: string;
-  fullName: string;
-  phone: string;
-  email: string | null;
-};
-
-export type ContactListPropsType = {
-  userContacts: UserContactType[];
+export type ContactSliceState = {
+  editingContact: ContactType | null;
+  userContacts: ContactType[] | null;
+  contactStatus: Record<string, StatusType>;
+  mappedContacts: MappedContactType;
 };
 
 export type ChatType = {
@@ -34,41 +49,19 @@ export type ChatType = {
   conversationId: string;
 };
 
-export type CurrentChatContactType = {
-  fullName: string;
-  phone: string;
-  email: string | null;
-};
-
-export type ChatSliceStateType = {
-  currentChat: ChatType[];
-  userChats: ChatType[];
-  currentChatContact: CurrentChatContactType | null;
-  conversationMap: Record<string, string>;
-};
-
 export type GetUserChatResponse = {
   success: boolean;
   message: string;
   chats?: ChatType[];
 };
 
-export type Status = 'online' | 'offline';
-
-export type ContactSliceState = {
-  editingContact: ContactType | null;
-  userContacts: ContactType[] | null;
-  contactStatus: Record<string, Status>;
-};
-
 export type ChatWindowProps = {
   userId: string;
   GetUserChat: (phone: string) => Promise<GetUserChatResponse>;
-  conversationMapDB: Record<string, string>;
 };
 
 export type SendMsgPayloadType = {
-  conversationId: string | undefined;
+  conversationId: string | null;
   receiverPhone: string;
   text: string;
 };
@@ -80,27 +73,38 @@ export type ChatContentPropsType = {
 
 export interface UserContextType {
   userId: string;
-}
-
-export type NewConversationPayload = {
   phone: string;
-  conversationId: string;
-};
+}
 
 export type GetAllConversationsIdResponse = {
   success: boolean;
   message: string;
-  data?: Record<string, string>;
+  data: MappedConversationType | null;
 };
 
-export type conversationType = {
+export type ConversationType = {
   id: string;
   lastMessage: string | null;
   lastMessageAt: Date | null;
   lastMessageById: string | null;
 };
 
-export type ConversationWithParticipants = conversationType & {
+export type MappedConversationType = Record<string, ConversationType>;
+
+export type ChatSliceStateType = {
+  currentChat: ChatType[];
+  userChats: ChatType[];
+  currentChatContact: CurrentChatContactType | null;
+  mappedConversation: MappedConversationType;
+  isUserTyping: boolean;
+};
+
+export type ConversationPayload = {
+  phone: string;
+  conversation: ConversationType;
+};
+
+export type ConversationWithParticipants = ConversationType & {
   participants: {
     name: string;
     phone: string | null;
@@ -112,4 +116,40 @@ export type GetAllConversationsResponse = {
   success: boolean;
   message: string;
   data?: ConversationWithParticipants[];
+};
+
+export type GeneralResponseType = {
+  success: boolean;
+  message: string;
+};
+
+export type MappedContactType = Record<string, CurrentChatContactType>;
+
+export type GetAllMappedContactsResponseType = GeneralResponseType & {
+  data: MappedContactType | null;
+};
+
+export type JwtVerifyType = {
+  sub: string;
+  jti?: string;
+  iat?: number;
+  exp?: number;
+};
+
+export type ChatListPropsType = {
+  dbMappedContacts: MappedContactType | null;
+  dbMappedConversations: MappedConversationType | null;
+  userId: string;
+};
+
+export type DashboardClientProps = {
+  contacts: ContactType[];
+};
+
+export type TypingPayloadType = {
+  phone: string;
+};
+
+export type TypingPayloadResponseType = {
+  isTyping: boolean;
 };

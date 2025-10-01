@@ -1,19 +1,15 @@
-import { WS_CONST } from '@repo/lib';
 import { Middleware } from '@reduxjs/toolkit';
+import { WS_CONST } from '@repo/lib';
 import {
   addToConversationMap,
   addToCurrentChat,
+  setIsUserTyping,
   setWsConnectionStatus,
-  store,
   updateContactStatus,
 } from '..';
-import {
-  ChatType,
-  NewConversationPayload,
-  SendMsgPayloadType,
-} from '@repo/types';
 
 let wsClient: WebSocket | null;
+let typingTimeout: NodeJS.Timeout | null = null;
 
 export const websocketMiddleware: Middleware =
   (store) => (next) => (action: any) => {
@@ -28,6 +24,7 @@ export const websocketMiddleware: Middleware =
       DISCONNECT,
       ERROR,
       NEW_CONVERSATION,
+      UPDATE_CONVERSATION,
     } = WS_CONST;
 
     const { type, payload: clientPayload } = action;
@@ -66,7 +63,17 @@ export const websocketMiddleware: Middleware =
           case NEW_CONVERSATION:
             store.dispatch(addToConversationMap(serverPayload));
             break;
+          case UPDATE_CONVERSATION:
+            store.dispatch(addToConversationMap(serverPayload));
+            break;
           case TYPING:
+            store.dispatch(setIsUserTyping(serverPayload));
+            if (serverPayload.isTyping) {
+              if (typingTimeout) clearTimeout(typingTimeout);
+              typingTimeout = setTimeout(() => {
+                store.dispatch(setIsUserTyping({ isTyping: false }));
+              }, 500);
+            }
             break;
           case ERROR:
             console.log('WS Client Error ❌');
@@ -89,28 +96,37 @@ export const websocketMiddleware: Middleware =
         case CHAT:
           wsClient.send(
             JSON.stringify({
-              type: CHAT,
+              type,
               payload: clientPayload,
             })
           );
           break;
 
         case TYPING:
+          wsClient.send(
+            JSON.stringify({
+              type,
+              payload: clientPayload,
+            })
+          );
           break;
         case USER_STATUS:
           wsClient.send(
             JSON.stringify({
-              type: USER_STATUS,
-              payload: {
-                phone: action.payload.phone,
-              },
+              type,
+              payload: clientPayload,
             })
           );
           break;
         case DISCONNECT:
+          store.dispatch(setWsConnectionStatus(false));
+          wsClient.send(
+            JSON.stringify({
+              type,
+            })
+          );
           wsClient.close();
           wsClient = null;
-          store.dispatch(setWsConnectionStatus(false));
           break;
       }
     }

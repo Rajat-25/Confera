@@ -14,6 +14,7 @@ const config = {
         'primary-border': '#44403c',
         'primary-text': '#ffffff',
         'secondary-text': '#d1d5db',
+        'tertiary-text': '#9ca3af',
         'tertiary-bg': '#0c0e18',
       },
     },

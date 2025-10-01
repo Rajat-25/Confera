@@ -1,5 +1,5 @@
 import { auth } from '@/auth';
-import { urlPath } from '@/utils';
+import { urlPath } from '@repo/lib';
 import { redirect } from 'next/navigation';
 import { ReactNode } from 'react';
 import { getUserPhoneNo } from '../actions/user';

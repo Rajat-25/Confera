@@ -1,10 +1,9 @@
 'use client';
-import React from 'react';
 import { FiEdit2 } from 'react-icons/fi';
 
-import { Button } from '@repo/ui/button';
 import { setEditingContact } from '@/store';
-import { ContactType } from '@/types';
+import { ContactType } from '@repo/types';
+import { Button } from '@repo/ui/button';
 import { useDispatch } from 'react-redux';
 
 const EditButton_CL = ({ item }: { item: ContactType }) => {

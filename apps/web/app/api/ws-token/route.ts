@@ -4,7 +4,7 @@ import { signWsToken } from '@repo/lib';
 
 export async function GET(request: NextRequest) {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return NextResponse.json(
       { success: false, message: 'unauthorized' },
@@ -12,14 +12,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const data = {
+  const { token } = signWsToken({
     userId: session.user.id,
-    expiresIn: '5m' as const,
-  };
+    expiresIn: '10m' as const,
+  });
 
-  const { token, jti } = signWsToken(data);
-
-  const responseData = { token, jti, expiresIn: 300 };
-
-  return NextResponse.json({ success: true, responseData });
+  return NextResponse.json({ success: true, token });
 }

@@ -1,12 +1,12 @@
-import React from 'react';
+import { ChangeEvent, ReactNode } from 'react';
 
 type InputField_CF_Props = {
-  icon: React.ReactNode;
+  icon: ReactNode;
   type: string;
   name: string;
   placeholder: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 
 const InputField_CF = ({

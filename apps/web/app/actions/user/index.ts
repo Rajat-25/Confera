@@ -4,12 +4,13 @@ import { phoneSchema } from '@/utils';
 import { dbClient } from '@repo/db';
 import { isUserAuthorized } from '../shared';
 
-export async function getUserPhoneNo() {
-  const { success, userId } = await isUserAuthorized();
+export const getUserPhoneNo = async () => {
+  const { success, data } = await isUserAuthorized();
 
-  if (!success || !userId) {
+  if (!success || !data?.userId) {
     return { success: false, message: 'User not authorized' };
   }
+  const userId = data.userId;
 
   try {
     const user = await dbClient.user.findUnique({ where: { id: userId } });
@@ -21,14 +22,16 @@ export async function getUserPhoneNo() {
   } catch (err) {
     return { success: false, message: 'Internal Server error' };
   }
-}
+};
 
-export async function AddUserPhoneNo(prevState: any, formData: FormData) {
-  const { success, userId } = await isUserAuthorized();
+export const AddUserPhoneNo = async (prevState: any, formData: FormData) => {
+  const { success, data } = await isUserAuthorized();
 
-  if (!success || !userId) {
+  if (!success || !data?.userId) {
     return { success: false, message: 'User not authorized' };
   }
+
+  const userId = data.userId;
 
   const result = phoneSchema.safeParse(formData.get('phone'));
 
@@ -46,4 +49,4 @@ export async function AddUserPhoneNo(prevState: any, formData: FormData) {
   } catch (err) {
     return { success: false, message: 'Phone already exists or DB error' };
   }
-}
+};
