@@ -1,6 +1,6 @@
 'use client';
 import {
-  clearChatState,
+  clearChatSliceState,
   RootState,
   setConversationMap,
   setCurrentChatContact,
@@ -16,8 +16,6 @@ const ChatList = ({
   dbMappedConversations,
   userId,
 }: ChatListPropsType) => {
-  
-
   const dispatch = useDispatch();
   const [inputText, setInputText] = useState<string>('');
 
@@ -43,7 +41,7 @@ const ChatList = ({
 
   useEffect(() => {
     return () => {
-      dispatch(clearChatState());
+      dispatch(clearChatSliceState());
     };
   }, []);
 

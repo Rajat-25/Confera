@@ -8,12 +8,8 @@ import {
   GetUserChatResponse,
   MappedConversationType
 } from '@repo/types';
-import { z } from 'zod';
 import { isUserAuthorized } from '../shared';
 
-const chatSchema = z.object({
-  contactId: z.string('Invalid contact id'),
-});
 
 export const GetAllMappedConversation =
   async (): Promise<GetAllConversationsIdResponse> => {
@@ -22,6 +18,7 @@ export const GetAllMappedConversation =
     if (!authSuccess || !data?.userId) {
       return { success: false, message: 'User not authorized', data: null };
     }
+
     const { userId } = data;
 
     try {
@@ -74,12 +71,13 @@ export const GetUserChat = async (
   if (!success || !data?.userId) {
     return { success: false, message: 'User not authorized' };
   }
+
   const { userId } = data;
 
-  const { success: schemSuccess, data: parsedData } =
+  const { success: schemaSuccess, data: parsedData } =
     phoneSchema.safeParse(phone);
 
-  if (!schemSuccess) {
+  if (!schemaSuccess) {
     return { success: false, message: 'Invalid phone number' };
   }
 

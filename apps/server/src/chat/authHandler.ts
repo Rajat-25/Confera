@@ -2,13 +2,13 @@ import { verifyWsToken, WS_CONST } from '@repo/lib';
 import { ChatAuthPropsType_S } from '../types';
 import { GetContacts, GetUser } from '../utils/helper';
 
-export const chatAuth = async ({
+export const authHandler = async ({
   ws,
   payload,
-  ClientMapping,
+  clientMapping,
   broadcastStatusToContacts,
 }: ChatAuthPropsType_S) => {
-  const { AUTH_SUCCESS, AUTH_FAILED, CHAT, ERROR } = WS_CONST;
+  const { AUTH_SUCCESS, AUTH_FAILED, ERROR } = WS_CONST;
   try {
     const { success: tokenSuccess, decoded } = verifyWsToken(payload.jwtToken);
 
@@ -45,7 +45,7 @@ export const chatAuth = async ({
       phone: phone!,
     };
 
-    ClientMapping.set(phone!, ws);
+    clientMapping.set(phone!, ws);
 
     ws.send(
       JSON.stringify({

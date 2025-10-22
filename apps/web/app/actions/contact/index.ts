@@ -24,10 +24,10 @@ export const GetAllMappedContacts =
       if (!success || !data?.userId) {
         return { success: false, message: 'User not authorized', data: null };
       }
-      const { userId } = data;
 
       const { success: contactSuccess, data: contactData } =
         await GetUserContacts();
+
       if (!contactSuccess || !contactData) {
         return {
           success: false,
@@ -49,11 +49,11 @@ export const GetAllMappedContacts =
 
       return {
         success: true,
-        message: 'Mapped Contacts fetched successfully',
+        message: 'Success',
         data: mappedContacts,
       };
     } catch (err) {
-      return { success: false, message: 'Error fetching data', data: null };
+      return { success: false, message: 'Error While fetching data', data: null };
     }
   };
 
@@ -167,6 +167,6 @@ export const GetUserContacts = async (): Promise<GetUserContactsResponse> => {
       message: 'Contacts fetched successfully',
     };
   } catch (err) {
-    return { success: false, message: 'Error fetching contacts', data: null };
+    return { success: false, message: 'Error while fetching contacts', data: null };
   }
 };

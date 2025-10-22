@@ -1,10 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { WebsocketSliceStateType } from '@repo/types';
 
-type WebsocketSliceStateTyep = {
-  wsConnectionStatus: boolean;
-};
-
-const initialState: WebsocketSliceStateTyep = {
+const initialState: WebsocketSliceStateType = {
   wsConnectionStatus: false,
 };
 
@@ -17,7 +14,6 @@ const WebsocketSlice = createSlice({
     },
   },
 });
-
 
 export const { setWsConnectionStatus } = WebsocketSlice.actions;
 export default WebsocketSlice;

@@ -1,26 +1,49 @@
 'use client';
-import { setCurrentChatContact } from '@/store';
-import { urlPath } from '@repo/lib';
+import {
+  setCallInitiatedBy,
+  setCallState,
+  setCurrentCallContact,
+  setCurrentChatContact,
+} from '@/store';
+import { CALL_CONST, urlPath } from '@repo/lib';
 import { ContactType, DashboardClientProps } from '@repo/types';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useState } from 'react';
 import { FiMessageCircle, FiSearch, FiVideo } from 'react-icons/fi';
 import { LuArrowUpRight } from 'react-icons/lu';
 import { useDispatch } from 'react-redux';
+import CallNotification from '../CallNotification';
 
 const DashboardClient = ({ contacts }: DashboardClientProps) => {
-  const [inputText, setInputText] = useState<string>('');
-  const router = useRouter();
+  const route = useRouter();
   const dispatch = useDispatch();
+  const { INITIATE_CALL } = CALL_CONST;
+
+  const [inputText, setInputText] = useState<string>('');
 
   const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
   };
 
-  const currentChatContactHandler = (contact: ContactType) => {
+  const chatActionHandler = (contact: ContactType) => {
     dispatch(setCurrentChatContact(contact));
-    router.push(urlPath.chat);
+    route.push(urlPath.chat);
+  };
+
+  const callActionHandler = (contact: ContactType) => {
+    dispatch(setCurrentCallContact({ phone: contact.phone }));
+    dispatch(setCallInitiatedBy('Me'));
+    dispatch(setCallState('initiated'));
+    dispatch({
+      type: INITIATE_CALL,
+      payload: {
+        receiverPhoneNo: contact.phone,
+      },
+    });
+
+    route.push(urlPath.call);
   };
 
   const filteredContacts = contacts?.filter((item: ContactType) => {
@@ -33,6 +56,7 @@ const DashboardClient = ({ contacts }: DashboardClientProps) => {
   return (
     <>
       <div className='focus-within:ring-2 rounded-xl focus:ring-secondary flex items-center gap-x-2 p-3 shadow-sm shadow-slate-800 text-secondary-text'>
+        <CallNotification />
         <FiSearch size={20} className='text-xl' />
         <input
           onChange={onChangeHandler}
@@ -46,7 +70,7 @@ const DashboardClient = ({ contacts }: DashboardClientProps) => {
           return (
             <div
               key={item.id}
-              className='transition-all ease-in-out duration-700 hover:bg-gray-800 hover:scale-105 flex justify-between p-4  text-secondary-text bg-secondary-bg rounded-xl'
+              className='transition-all ease-in-out duration-700 hover:bg-gray-800  flex justify-between items-center p-4  text-secondary-text bg-secondary-bg rounded-xl'
             >
               <div className='flex gap-x-4 items-center'>
                 <span className='w-3 h-3 bg-green-500 rounded-full'></span>
@@ -60,19 +84,21 @@ const DashboardClient = ({ contacts }: DashboardClientProps) => {
                 </div>
               </div>
 
-              <div className='flex gap-x-4'>
-                <div onClick={() => currentChatContactHandler(item)}>
+              <div className='flex gap-x-8'>
+                <div onClick={() => chatActionHandler(item)}>
                   <FiMessageCircle
                     strokeWidth={3}
-                    className='text-secondary-text hover:text-secondary  hover:scale-110'
-                    size={24}
+                    className='text-secondary-text hover:text-secondary  hover:scale-125 transition-all ease-in-out duration-300'
+                    size={30}
                   />
                 </div>
-                <FiVideo
-                  strokeWidth={3}
-                  className='text-secondary-text font-bold hover:text-primary hover:scale-110'
-                  size={24}
-                />
+                <div onClick={() => callActionHandler(item)}>
+                  <FiVideo
+                    strokeWidth={3}
+                    className=' text-secondary-text font-bold hover:text-primary hover:scale-125 transition-all ease-in-out duration-300 '
+                    size={30}
+                  />
+                </div>
               </div>
             </div>
           );

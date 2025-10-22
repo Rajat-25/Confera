@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
-
-export const fullNameSchema = z.string().trim().min(2, 'Name must be at least 2 characters');
+export const fullNameSchema = z
+  .string()
+  .trim()
+  .min(2, 'Name must be at least 2 characters');
 
 export const emailSchema = z.email('Invalid email address');
 
@@ -23,15 +25,14 @@ export const EditContactSchema = z.object({
   phone: phoneSchema,
 });
 
-
 export const DeleteContactSchema = z.object({
-  id: z.string().regex(/^c[^\s-]{8,}$/, "Invalid id"),
+  id: z.string().regex(/^c[^\s-]{8,}$/, 'Invalid id'),
 });
-
-
 
 export type EditContactSchemaType = z.infer<typeof EditContactSchema>;
 
 export type DeleteContactSchemaType = z.infer<typeof DeleteContactSchema>;
 
-
+export const chatSchema = z.object({
+  contactId: z.string('Invalid contact id'),
+});

@@ -5,13 +5,12 @@ import {
   ConversationPayload,
   CurrentChatContactType,
   MappedConversationType,
-  TypingPayloadResponseType
+  TypingPayloadResponseType,
 } from '@repo/types';
 
 const initialState: ChatSliceStateType = {
   currentChat: [],
   currentChatContact: null,
-  userChats: [],
   mappedConversation: {},
   isUserTyping: false,
 };
@@ -20,7 +19,10 @@ const chatSlice = createSlice({
   name: 'chat_slice',
   initialState,
   reducers: {
-    setIsUserTyping: (state, action: PayloadAction<TypingPayloadResponseType>) => {
+    setIsUserTyping: (
+      state,
+      action: PayloadAction<TypingPayloadResponseType>
+    ) => {
       state.isUserTyping = action.payload.isTyping;
     },
     setCurrentChatContact: (
@@ -47,9 +49,7 @@ const chatSlice = createSlice({
       };
     },
 
-    setUserChats: (state, action: PayloadAction<ChatType[]>) => {
-      state.userChats = action.payload;
-    },
+    
 
     addToCurrentChat: (state, action: PayloadAction<ChatType>) => {
       state.currentChat.push(action.payload);
@@ -62,11 +62,10 @@ const chatSlice = createSlice({
       state.currentChat = [];
     },
 
-    clearChatState: (state) => {
+    clearChatSliceState: (state) => {
       state.currentChat = [];
-      state.userChats = [];
-      state.mappedConversation = {};
       state.currentChatContact = null;
+      state.mappedConversation = {};
       state.isUserTyping = false;
     },
   },
@@ -76,11 +75,10 @@ export const {
   clearCurrentChat,
   setConversationMap,
   addToConversationMap,
-  setUserChats,
   setCurrentChat,
   addToCurrentChat,
   setCurrentChatContact,
-  clearChatState,
+  clearChatSliceState,
   setIsUserTyping,
 } = chatSlice.actions;
 

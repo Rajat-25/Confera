@@ -1,7 +1,7 @@
 import { GetUserContacts } from '@/app/actions/contact';
-import { ToastContainer } from 'react-toastify';
 import ContactForm from '@/components/contact/ContactForm';
 import ContactList from '@/components/contact/ContactList';
+import { ToastContainer } from 'react-toastify';
 
 const page = async () => {
   const { success: contactSuccess, data: contactData } =

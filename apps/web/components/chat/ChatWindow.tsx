@@ -1,6 +1,6 @@
 'use client';
 import { clearCurrentChat, RootState, setCurrentChat } from '@/store';
-import { WS_CONST } from '@repo/lib';
+import { CHAT_CONST } from '@repo/lib';
 import { ChatWindowProps, SendMsgPayloadType, StatusType } from '@repo/types';
 import { Button } from '@repo/ui/button';
 
@@ -9,6 +9,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import ChatContent from './ChatContent';
 
 const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
+  const { CHAT, USER_STATUS, TYPING } = CHAT_CONST;
+  const dispatch = useDispatch();
+
+  const [msg, setMsg] = useState<string>('');
+  const [isUserOnline, setIsUserOnline] = useState<StatusType>('offline');
+  const [isTyping, setIsTyping] = useState<boolean>(false);
+
+  const typingRef = useRef<NodeJS.Timeout | null>(null);
+
   const { currentChatContact, mappedConversation, currentChat, isUserTyping } =
     useSelector((state: RootState) => state.chat_slice);
 
@@ -20,47 +29,8 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
     (state: RootState) => state.contact_slice
   );
 
-  const dispatch = useDispatch();
-  const { CHAT, USER_STATUS, TYPING } = WS_CONST;
-
-  const [msg, setMsg] = useState<string>('');
-  const [isUserOnline, setIsUserOnline] = useState<StatusType>('offline');
-  const [isTyping, setIsTyping] = useState<boolean>(false);
-  const typingRef = useRef<NodeJS.Timeout | null>(null);
-
   const phone = currentChatContact?.phone;
   const fullName = currentChatContact?.fullName;
-
-  useEffect(() => {
-    if (!contactStatus || !phone) return;
-    setIsUserOnline(contactStatus[phone] ?? 'offline');
-  }, [contactStatus, phone]);
-
-  useEffect(() => {
-    dispatch(clearCurrentChat());
-
-    if (!phone) return;
-    const callFunc = async () => {
-      const { success, chats } = await GetUserChat(phone);
-      if (success && chats && chats.length !== 0) {
-        dispatch(setCurrentChat(chats));
-      }
-    };
-
-    callFunc();
-  }, [phone]);
-
-  useEffect(() => {
-    setIsTyping(isUserTyping);
-  }, [isUserTyping]);
-
-  useEffect(() => {
-    if (!wsConnectionStatus || !phone) return;
-    const userStatusPayload = { type: USER_STATUS, payload: { phone } };
-    dispatch(userStatusPayload);
-  }, [phone, wsConnectionStatus]);
-
-  // SEND Message
 
   const sendMsgHandler = () => {
     if (!msg || !wsConnectionStatus || !phone) return;
@@ -77,7 +47,6 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
     setMsg('');
   };
 
-  // onChange Handler
   const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     setMsg(e.target.value);
 
@@ -91,8 +60,37 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
         payload: { phone },
       });
     }, 200);
-
   };
+
+  const getMyChats = async (phone: string) => {
+    const { success, chats } = await GetUserChat(phone);
+    if (success && chats && chats.length !== 0) {
+      dispatch(setCurrentChat(chats));
+    }
+  };
+
+  useEffect(() => {
+    if (!contactStatus || !phone) return;
+    setIsUserOnline(contactStatus[phone] ?? 'offline');
+  }, [contactStatus, phone]);
+
+  useEffect(() => {
+    dispatch(clearCurrentChat());
+
+    if (!phone) return;
+    
+    getMyChats(phone);
+  }, [phone]);
+
+  useEffect(() => {
+    setIsTyping(isUserTyping);
+  }, [isUserTyping]);
+
+  useEffect(() => {
+    if (!wsConnectionStatus || !phone) return;
+    const userStatusPayload = { type: USER_STATUS, payload: { phone } };
+    dispatch(userStatusPayload);
+  }, [phone, wsConnectionStatus]);
 
   if (!currentChatContact) {
     return (

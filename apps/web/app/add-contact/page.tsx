@@ -1,10 +1,10 @@
 'use client';
+import { phoneSchema } from '@/utils';
+import { urlPath } from '@repo/lib';
 import { Button } from '@repo/ui/button';
 import { FormEvent, useActionState, useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { AddUserPhoneNo } from '../actions/user';
-import { urlPath } from '@repo/lib';
-import { phoneSchema } from '@/utils';
 
 import { signOut } from 'next-auth/react';
 

@@ -1,22 +1,9 @@
 import { dbClient } from '@repo/db';
-import { ContactsDbType } from '../types';
-import { success } from 'zod';
-
-type GeneralResponseType = {
-  success: boolean;
-  message: string;
-};
-type GetContactsResponseType = GeneralResponseType & {
-  data?: ContactsDbType[];
-};
-
-type GetUserResponseType = GeneralResponseType & {
-  data?: {
-    id: string;
-    phone: string | null;
-    name: string;
-  };
-};
+import {
+  GetContactsResponseType,
+  GetUserParamsType,
+  GetUserResponseType,
+} from '../types';
 
 export const GetContacts = async (
   userId: string
@@ -40,12 +27,6 @@ export const GetContacts = async (
     return { success: false, message: 'Internal server error' };
   }
 };
-
-type GetUserParamsType = {
-  userId?: string;
-  phone?: string;
-};
-
 
 export const GetUser = async (
   props: GetUserParamsType
@@ -156,5 +137,29 @@ export const updateConversation = async ({
     };
   } catch (err) {
     return { success: false, message: 'Internal server error' };
+  }
+};
+
+export const isUserValid = async (phoneNo: string) => {
+  try {
+    const user = await dbClient.user.findFirst({
+      where: {
+        phone: phoneNo,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (user && user.id) {
+      return { success: true, message: 'success' };
+    } else {
+      return { success: false, message: 'invalid_user' };
+    }
+  } catch (err) {
+    return {
+      success: false,
+      message: 'something_went_wrong',
+    };
   }
 };

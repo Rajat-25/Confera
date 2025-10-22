@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
-import { NextRequest, NextResponse } from 'next/server';
 import { signWsToken } from '@repo/lib';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   const { token } = signWsToken({
     userId: session.user.id,
-    expiresIn: '10m' as const,
+    expiresIn: '15m' as const,
   });
 
   return NextResponse.json({ success: true, token });

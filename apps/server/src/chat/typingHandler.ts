@@ -1,25 +1,26 @@
-import { WS_CONST } from '@repo/lib';
+import { CHAT_CONST } from '@repo/lib';
 import { WebSocket } from 'ws';
 import { TypingHandlerPropsType } from '../types';
 
 export const typingHandler = ({
   ws,
-  ClientMapping,
+  clientMapping,
   payload,
 }: TypingHandlerPropsType) => {
-  const { TYPING, ERROR } = WS_CONST;
+  const { TYPING, CHAT_ERROR } = CHAT_CONST;
   const { phone } = payload;
   if (!phone) {
-    return ws.send(
+    ws.send(
       JSON.stringify({
-        type: ERROR,
+        type: CHAT_ERROR,
         payload: { message: 'Invalid Payload' },
       })
     );
+    return;
   }
-  const receiverClient = ClientMapping.get(phone);
+  const receiverClient = clientMapping.get(phone);
   if (receiverClient && receiverClient?.readyState === WebSocket.OPEN) {
-    return receiverClient.send(
+    receiverClient.send(
       JSON.stringify({
         type: TYPING,
         payload: {
@@ -27,5 +28,7 @@ export const typingHandler = ({
         },
       })
     );
+
+    return;
   }
 };

@@ -1,10 +1,10 @@
 'use client';
 import { WS_CONST } from '@repo/lib';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import {jwtDecode} from 'jwt-decode';
 
 let reconnectTimer: NodeJS.Timeout;
 
@@ -18,14 +18,14 @@ const WebSocketProvider = () => {
       console.log('Initiate WS Connection Request ');
 
       try {
-        const { data} = await axios.get('/api/ws-token');
+        const { data } = await axios.get('/api/ws-token');
 
         if (!data?.success || !data?.token) {
           console.log('unauthenticated');
           return;
         }
 
-        const  token = data?.token;
+        const token = data?.token;
 
         dispatch({ type: CONNECT, payload: { jwtToken: token } });
 
@@ -35,23 +35,21 @@ const WebSocketProvider = () => {
 
         reconnectTimer = setTimeout(() => {
           dispatch({ type: DISCONNECT });
-          init(); 
+          init();
         }, msUntilExpiry - 5000);
-
       } catch (err) {
         console.log('Client Auth initialisation failed:', err);
       }
     };
 
-    if (status === 'authenticated') {
-      init();
-    }
+    if (status === 'authenticated') init();
 
     return () => {
       console.log('WebSocket Disconnected');
       clearTimeout(reconnectTimer);
       dispatch({ type: DISCONNECT });
     };
+    
   }, [status]);
 
   return null;

@@ -93,7 +93,6 @@ export type MappedConversationType = Record<string, ConversationType>;
 
 export type ChatSliceStateType = {
   currentChat: ChatType[];
-  userChats: ChatType[];
   currentChatContact: CurrentChatContactType | null;
   mappedConversation: MappedConversationType;
   isUserTyping: boolean;
@@ -152,4 +151,49 @@ export type TypingPayloadType = {
 
 export type TypingPayloadResponseType = {
   isTyping: boolean;
+};
+
+export type IsUserExistPropsType = {
+  phone?: string;
+  email?: string;
+};
+
+export type StartLocalStreamProps = {
+  enableAudio: boolean;
+  enableVideo: boolean;
+};
+
+export type InitiatedCallStatusType =
+  | 'initiated'
+  | 'accepted'
+  | 'rejected'
+  | 'user_busy'
+  | 'user_offline'
+  | 'invalid_user'
+  | 'call_error'
+  | 'ended'
+  | null;
+
+export type CurrentCallContactType = Pick<ContactType, 'phone'>;
+
+export type CallSliceStateType = {
+  callInitiatedBy: string | null;
+
+  incomingCallState: boolean;
+  caller: string | null;
+  currentCallContact: CurrentCallContactType | null;
+
+  callState: InitiatedCallStatusType;
+
+  localOfferState: RTCSessionDescription | null;
+  localAnswerState: RTCSessionDescription | null;
+
+  remoteOfferState: RTCSessionDescription | null;
+  remoteAnswerState: RTCSessionDescription | null;
+
+  iceCandidateState: RTCIceCandidate[] | null;
+};
+
+export type WebsocketSliceStateType = {
+  wsConnectionStatus: boolean;
 };

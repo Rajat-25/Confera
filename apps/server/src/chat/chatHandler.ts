@@ -1,4 +1,4 @@
-import { WS_CONST } from '@repo/lib';
+import { CHAT_CONST } from '@repo/lib';
 import { ChatHandlerPropsType } from '../types';
 import {
   createChat,
@@ -10,11 +10,12 @@ import {
 export const chatHandler = async ({
   ws,
   payload,
-  ClientMapping,
+  clientMapping,
   sendMsgToClient,
 }: ChatHandlerPropsType) => {
   const createdAt = new Date();
-  const { NEW_CONVERSATION, CHAT, ERROR, UPDATE_CONVERSATION } = WS_CONST;
+  const { NEW_CONVERSATION, CHAT, CHAT_ERROR, UPDATE_CONVERSATION } =
+    CHAT_CONST;
 
   const { receiverPhone, text, conversationId } = payload;
   const { userId: senderId, phone: senderPhone } = ws?.userContext!;
@@ -22,26 +23,27 @@ export const chatHandler = async ({
   if (!senderId || !senderPhone) {
     ws.send(
       JSON.stringify({
-        type: ERROR,
+        type: CHAT_ERROR,
         payload: { message: 'Unauthorized' },
       })
     );
     return;
   }
 
-  const receiverClient = ClientMapping.get(receiverPhone);
+  const receiverClient = clientMapping.get(receiverPhone);
 
   try {
     const { success: receiverUserSuccess, data: receiverUserData } =
       await GetUser({ phone: receiverPhone });
 
     if (!receiverUserSuccess || !receiverUserData) {
-      return ws.send(
+      ws.send(
         JSON.stringify({
-          type: ERROR,
-          payload: { message: 'Receiver not found' },
+          type: CHAT_ERROR,
+          payload: { message: 'Invalid User' },
         })
       );
+      return;
     }
 
     if (conversationId) {
@@ -133,7 +135,7 @@ export const chatHandler = async ({
   } catch (err) {
     return ws.send(
       JSON.stringify({
-        type: ERROR,
+        type: CHAT_ERROR,
         payload: { message: 'Internal server error' },
       })
     );

@@ -2,6 +2,7 @@
 
 import { phoneSchema } from '@/utils';
 import { dbClient } from '@repo/db';
+import { GeneralResponseType, IsUserExistPropsType } from '@repo/types';
 import { isUserAuthorized } from '../shared';
 
 export const getUserPhoneNo = async () => {
@@ -19,6 +20,40 @@ export const getUserPhoneNo = async () => {
       phone: user?.phone ?? null,
       message: ' Phone number fetched successfully',
     };
+  } catch (err) {
+    return { success: false, message: 'Internal Server error' };
+  }
+};
+
+export const isUserExist = async ({
+  phone,
+  email,
+}: IsUserExistPropsType): Promise<GeneralResponseType> => {
+  const { success, data } = await isUserAuthorized();
+
+  if (!success || !data?.userId) {
+    return { success: false, message: 'User not authorized' };
+  }
+  const userId = data.userId;
+
+  if (!phone && !email) {
+    return { success: false, message: 'Phone or Email required' };
+  }
+
+  try {
+    const user = await dbClient.user.findFirst({
+      where: {
+        OR: [{ phone }, { email }],
+      },
+      select: { id: true },
+    });
+
+    return user?.id
+      ? {
+          success: true,
+          message: 'User Exist',
+        }
+      : { success: false, message: 'User does not exist' };
   } catch (err) {
     return { success: false, message: 'Internal Server error' };
   }
