@@ -8,16 +8,16 @@ type SignWSTokenPropsType = {
 };
 
 
-const WS_JWT_SECRET = process.env.WS_JWT_SECRET || '';
+const secret = process.env.WS_JWT_SECRET || '';
 
 export function signWsToken(data: SignWSTokenPropsType) {
-  const { userId, expiresIn = '5m' } = data;
+  const { userId, expiresIn = '15m' } = data;
   const now = Math.floor(Date.now() / 1000);
   const jti = uuidv4();
 
   const payload = { sub: userId, jti, iat: now };
 
-  const token = jwt.sign(payload, WS_JWT_SECRET, { expiresIn });
+  const token = jwt.sign(payload, secret, { expiresIn });
 
   return { token};
 }
@@ -29,7 +29,9 @@ export const verifyWsToken = (
   decoded?: JwtVerifyType;
 } => {
   try {
-    const decoded = jwt.verify(token, WS_JWT_SECRET) as JwtVerifyType;
+    const decoded = jwt.verify(token, secret) as JwtVerifyType;
+    console.log(token, '\n');
+
     return { success: true, decoded };
   } catch (err) {
     return { success: false };

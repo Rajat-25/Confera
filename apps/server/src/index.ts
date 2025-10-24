@@ -3,11 +3,15 @@ import express from 'express';
 import http from 'http';
 import { WsCommunicationSingleton } from './ws/ws-server.js';
 
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT ;
 const app = express();
 const server = http.createServer(app);
 
 app.use(express.json());
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ message: 'Backend is live' });
+});
 
 WsCommunicationSingleton.getInstance(server);
 

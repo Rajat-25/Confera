@@ -69,7 +69,7 @@ export const websocketMiddleware: Middleware =
             store.dispatch(setWsConnectionStatus(true));
             break;
           case AUTH_FAILED:
-            console.log('Auth Failed ❌');
+            console.log('Auth Failed ❌', serverPayload.message);
             store.dispatch(setWsConnectionStatus(false));
             wsClient?.close();
             break;
@@ -141,7 +141,7 @@ export const websocketMiddleware: Middleware =
             break;
 
           case ERROR:
-            console.log('WS Client Error ❌');
+            console.log('WS Client Error ❌', serverPayload.message);
             break;
         }
       };

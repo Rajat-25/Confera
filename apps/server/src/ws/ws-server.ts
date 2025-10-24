@@ -68,7 +68,10 @@ export class WsCommunicationSingleton {
           console.error('WS Error ❌:', msg);
 
           return ws.send(
-            JSON.stringify({ type: ERROR, message: 'Internal Server error' })
+            JSON.stringify({
+              type: ERROR,
+              payload: { message: 'Internal Server error' },
+            })
           );
         }
       });

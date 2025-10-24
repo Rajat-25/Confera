@@ -10,7 +10,7 @@ declare module 'next-auth' {
       name?: string | null;
       email?: string | null;
       image?: string | null;
-      phone?: string | null; 
+      phone?: string | null;
     };
   }
 }
@@ -20,7 +20,7 @@ const authOptions: NextAuthConfig = {
   providers: [Google({})],
   session: {
     strategy: 'database',
-    maxAge: 60 * 60 * 1
+    maxAge: 60 * 60 * 1,
   },
   callbacks: {
     async session({ session, user }) {

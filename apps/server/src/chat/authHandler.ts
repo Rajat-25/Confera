@@ -10,13 +10,19 @@ export const authHandler = async ({
 }: ChatAuthPropsType_S) => {
   const { AUTH_SUCCESS, AUTH_FAILED, ERROR } = WS_CONST;
   try {
-    const { success: tokenSuccess, decoded } = verifyWsToken(payload.jwtToken);
+    const { jwtToken } = payload;
+    const { success: tokenSuccess, decoded } = verifyWsToken(jwtToken);
+    console.log('---- \n', decoded, '---- \n', tokenSuccess);
 
     if (!tokenSuccess || !decoded) {
       ws.send(
-        JSON.stringify({ type: AUTH_FAILED, message: 'Invalid/Expired Token' })
+        JSON.stringify({
+          type: AUTH_FAILED,
+          payload: { message: 'Invalid/Expired Token' },
+        })
       );
-      return ws.close();
+      ws.close();
+      return;
     }
 
     const { sub: userId } = decoded;
@@ -50,7 +56,7 @@ export const authHandler = async ({
     ws.send(
       JSON.stringify({
         type: AUTH_SUCCESS,
-        message: 'WS Connection established successfully',
+        payload: { message: 'WS Connection established successfully' },
       })
     );
 
