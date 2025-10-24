@@ -28,10 +28,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-primary-bg`}
       >
-        <div className='h-screen flex flex-col'>
+        <div className='h-screen flex flex-col gap-y-2'>
           <Provider>
             <Navbar />
-            <div className='flex-1'>{children}</div>
+            <div className='flex-1 overflow-y-auto'>{children}</div>
           </Provider>
         </div>
       </body>

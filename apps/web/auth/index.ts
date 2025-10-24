@@ -20,7 +20,7 @@ const authOptions: NextAuthConfig = {
   providers: [Google({})],
   session: {
     strategy: 'database',
-    maxAge: 60 * 60 * 10
+    maxAge: 60 * 60 * 1
   },
   callbacks: {
     async session({ session, user }) {

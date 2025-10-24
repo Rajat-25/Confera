@@ -1,12 +1,12 @@
 'use client';
 
 import { urlPath } from '@repo/lib';
-import { Button } from '@repo/ui/button';
-import { signIn } from "next-auth/react";
+import { Button } from '@repo/ui';
+import { signIn } from 'next-auth/react';
 import { FcGoogle } from 'react-icons/fc';
 
 const GoogleSignInButton = () => {
-  const { dashboard} = urlPath;
+  const { dashboard } = urlPath;
 
   const signInHandler = async () => {
     await signIn('google', { callbackUrl: dashboard });

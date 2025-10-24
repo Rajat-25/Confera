@@ -2,13 +2,13 @@
   "name": "@repo/db",
   "version": "1.0.0",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -p tsconfig.json",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev --skip-generate",
     "deploy": "prisma migrate deploy",

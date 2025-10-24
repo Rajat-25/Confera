@@ -1,7 +1,7 @@
 'use client';
 import { clearCallSliceState, RootState } from '@/store';
 import { CALL_CONST, urlPath } from '@repo/lib';
-import { Button } from '@repo/ui/button';
+import { Button } from '@repo/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { MdCallEnd } from 'react-icons/md';
@@ -54,11 +54,10 @@ const ReceiverView = ({ phone }: { phone: string }) => {
 
   const answerHandler = async () => {
     const pc = pcRef.current;
-    if (!pc || !remoteOfferState ) return;
+    if (!pc || !remoteOfferState) return;
     try {
       await pc.setRemoteDescription(remoteOfferState);
 
-      console.log('remoteOffer \n', remoteOfferState);
 
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
@@ -71,23 +70,20 @@ const ReceiverView = ({ phone }: { phone: string }) => {
         },
       });
 
-      console.log('answer \n', answer);
     } catch (err) {
-      console.log(' Something went wrong!\n', err);
     }
   };
 
   const iceCandidateHandler = async () => {
     const pc = pcRef.current;
     if (!pc || !iceCandidateState) return;
-    console.log('icecandidate \n', iceCandidateState);
 
     try {
       for (const candidate of iceCandidateState) {
         await pc.addIceCandidate(candidate);
       }
     } catch (err) {
-      console.log('err in adding ice candidate \n', err);
+  
     }
   };
 

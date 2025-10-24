@@ -7,7 +7,8 @@ import {
 } from '@/store';
 import { CALL_CONST, urlPath } from '@repo/lib';
 import { ContactType, DashboardClientProps } from '@repo/types';
-import { useSession } from 'next-auth/react';
+import { FiUser } from 'react-icons/fi';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useState } from 'react';
@@ -56,14 +57,14 @@ const DashboardClient = ({ contacts }: DashboardClientProps) => {
   return (
     <>
       <div className='focus-within:ring-2 rounded-xl focus:ring-secondary flex items-center gap-x-2 p-3 shadow-sm shadow-slate-800 text-secondary-text'>
-        <CallNotification />
         <FiSearch size={20} className='text-xl' />
         <input
           onChange={onChangeHandler}
           type='text'
-          className='w-full focus:outline-none text-base bg-secondary-bg'
+          className='w-full h-fit focus:outline-none text-base bg-secondary-bg'
           placeholder='Search by name or phone...'
         />
+        <CallNotification />
       </div>
       {filteredContacts.length > 0 ? (
         filteredContacts.map((item: ContactType) => {
@@ -73,7 +74,7 @@ const DashboardClient = ({ contacts }: DashboardClientProps) => {
               className='transition-all ease-in-out duration-700 hover:bg-gray-800  flex justify-between items-center p-4  text-secondary-text bg-secondary-bg rounded-xl'
             >
               <div className='flex gap-x-4 items-center'>
-                <span className='w-3 h-3 bg-green-500 rounded-full'></span>
+                <FiUser stroke='orange' size={24} strokeWidth={3} />
                 <div className='flex flex-col gap-y-1'>
                   <div className='font-semibold text-secondary-text text-base'>
                     {item.fullName}

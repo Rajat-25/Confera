@@ -2,7 +2,7 @@
 import { clearCurrentChat, RootState, setCurrentChat } from '@/store';
 import { CHAT_CONST } from '@repo/lib';
 import { ChatWindowProps, SendMsgPayloadType, StatusType } from '@repo/types';
-import { Button } from '@repo/ui/button';
+import { Button } from '@repo/ui';
 
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -78,7 +78,7 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
     dispatch(clearCurrentChat());
 
     if (!phone) return;
-    
+
     getMyChats(phone);
   }, [phone]);
 
@@ -94,15 +94,17 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
 
   if (!currentChatContact) {
     return (
-      <div className='py-8 px-4 rounded-xl bg-secondary-bg text-secondary-text col-span-8 flex items-center justify-center'>
-        <p className='text-gray-400'>Select a contact to start chatting</p>
+      <div className='py-8 px-4 rounded-xl bg-secondary-bg col-span-8 flex items-center justify-center'>
+        <p className='font-medium text-lg text-tertiary-text'>
+          Select a contact to start chatting
+        </p>
       </div>
     );
   }
 
   return (
-    <div className='h-full py-2 px-8 rounded-xl bg-secondary-bg text-secondary-text col-span-8 flex flex-col '>
-      <div className='flex flex-col  justify-center  border-primary-border border-b-2 pb-2'>
+    <div className='h-full overflow-y-auto  col-span-8 flex flex-col py-1 px-6 rounded-xl bg-secondary-bg gap-y-2 text-secondary-text  '>
+      <div className=' flex flex-col  justify-center  py-1'>
         <div className='flex items-center gap-x-2'>
           <h2 className='text-secondary-text font-semibold text-lg'>
             {fullName}
@@ -116,6 +118,7 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
             </>
           )}
         </div>
+
         <div className='flex items-center gap-1 mt-1'>
           <span
             className={`h-2 w-2 rounded-full ${
@@ -132,7 +135,7 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
 
       <ChatContent userId={userId} currChats={currentChat} />
 
-      <div className='flex items-center  border-primary-border border-t pt-2'>
+      <div className=' flex items-center border-primary-border  gap-x-1 pt-2'>
         <input
           disabled={!wsConnectionStatus}
           autoFocus
@@ -143,13 +146,13 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
           }}
           onChange={onChangeHandler}
           placeholder='Type a message...'
-          className='flex-1 px-3 py-2 rounded-2xl  bg-gray-800 text-white outline-none'
+          className='flex-1 px-3 py-2 rounded-full  bg-gray-800 text-white outline-none'
         />
         <Button
           onClick={sendMsgHandler}
           type='button'
           disabled={wsConnectionStatus}
-          className={`px-8 py-2 text-lg rounded-full ${wsConnectionStatus ? 'bg-blue-800' : 'bg-gray-600'} text-white font-medium`}
+          className={`px-8 py-2 text-lg rounded-full ${wsConnectionStatus ? 'bg-blue-900' : 'bg-gray-600'} text-white font-medium`}
         >
           Send
         </Button>

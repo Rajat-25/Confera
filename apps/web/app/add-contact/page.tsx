@@ -1,7 +1,7 @@
 'use client';
 import { phoneSchema } from '@/utils';
 import { urlPath } from '@repo/lib';
-import { Button } from '@repo/ui/button';
+import { Button } from '@repo/ui';
 import { FormEvent, useActionState, useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { AddUserPhoneNo } from '../actions/user';

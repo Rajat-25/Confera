@@ -14,12 +14,10 @@ const ContactList = ({ contacts }: ContactListPropsType) => {
           return (
             <div
               key={id}
-              className='flex flex-col bg-secondary-bg sm:flex-row sm:items-center justify-between rounded-2xl px-4 py-2  hover:scale-105 transition-all duration-500 '
+              className='flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl px-4 py-2 hover:bg-gray-800 hover:scale-105 transition-all duration-500 '
             >
               <div className='flex items-center gap-x-6'>
-                <div className='bg-primary text-secondary-text rounded-full p-3'>
-                  <FiUser size={22} />
-                </div>
+                <FiUser stroke="orange" size={24}  strokeWidth={3} />
 
                 <div className='flex flex-col gap-y-1'>
                   <h3 className='text-lg font-semibold text-secondary-text'>

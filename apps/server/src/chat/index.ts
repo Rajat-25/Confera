@@ -12,7 +12,7 @@ export const chatService = async ({
   sendMsgToClient,
 }: ChatServicePropsType) => {
   const { CHAT, TYPING, USER_STATUS } = CHAT_CONST;
-  if (type === CHAT ) {
+  if (type === CHAT) {
     await chatHandler({
       ws,
       payload,

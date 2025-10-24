@@ -6,8 +6,8 @@ const page = async () => {
     await GetUserContacts();
 
   return (
-    <div className='bg-primary-bg w-full h-full p-4 '>
-      <div className='h-full bg-secondary-bg py-5 px-10  flex flex-col gap-y-4  rounded-xl'>
+    <div className='bg-primary-bg h-full p-4 '>
+      <div className='h-full bg-secondary-bg py-5 px-10  flex flex-col gap-y-4  rounded-xl overflow-y-auto'>
         {contactSuccess && contactData ? (
           <DashboardClient contacts={contactData} />
         ) : (

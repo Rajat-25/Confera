@@ -22,7 +22,6 @@ export const callActivityHandler = async ({
   } = CALL_CONST;
   if (type === INITIATE_CALL) {
     const { receiverPhoneNo } = payload;
-
     const { success: userValidStatus, message } =
       await isUserValid(receiverPhoneNo);
 
@@ -110,7 +109,7 @@ export const callActivityHandler = async ({
     const receiverClient = clientMapping.get(receiverPhoneNo);
 
     if (receiverClient) {
-      ws.send(
+      receiverClient.send(
         JSON.stringify({
           type: CALL_REJECTED,
           payload: { status: 'call_error' },
@@ -121,7 +120,7 @@ export const callActivityHandler = async ({
   } else if (type === CALL_ENDED) {
     const { receiverPhoneNo } = payload;
     const receiverClient = clientMapping.get(receiverPhoneNo);
-    
+
     callStatus.delete(payload.receiverPhoneNo);
     callStatus.delete(ws.userContext?.phone!);
     if (receiverClient) {

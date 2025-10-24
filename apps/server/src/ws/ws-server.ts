@@ -2,10 +2,10 @@ import { CALL_CONST, CHAT_CONST, WS_CONST } from '@repo/lib';
 import { GenPayloadType } from '@repo/types';
 import { Server } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
-import { callService } from './call';
-import { chatService } from './chat';
-import { authHandler } from './chat/authHandler';
-import { broadcastStatusToContactsPropsType } from './types';
+import { callService } from '../call';
+import { chatService } from '../chat';
+import { authHandler } from '../chat/authHandler';
+import { broadcastStatusToContactsPropsType } from '../types';
 import { disconnectHandler } from './disconnectHandler';
 
 const { AUTH_INIT, ERROR, DISCONNECT } = WS_CONST;
@@ -65,7 +65,7 @@ export class WsCommunicationSingleton {
           }
         } catch (err: any) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.log('WS Error ❌:', msg);
+          console.error('WS Error ❌:', msg);
 
           return ws.send(
             JSON.stringify({ type: ERROR, message: 'Internal Server error' })
@@ -74,7 +74,7 @@ export class WsCommunicationSingleton {
       });
 
       ws.on('error', (err) => {
-        console.log('Error', err);
+        console.error('Error', err);
       });
 
       ws.on('close', () => {

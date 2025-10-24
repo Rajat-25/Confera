@@ -2,7 +2,7 @@
 import { clearCallSliceState, RootState } from '@/store';
 import { CALL_CONST, urlPath } from '@repo/lib';
 import { StartLocalStreamProps } from '@repo/types';
-import { Button } from '@repo/ui/button';
+import { Button } from '@repo/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -72,9 +72,7 @@ const CallerView = ({ phone }: { phone: string }) => {
         payload: { sdp: pc.localDescription, receiver: phone },
       });
 
-      console.log('offer \n', offer);
     } catch (err) {
-      console.log('err in creating offer \n', err);
     }
   };
 
@@ -84,23 +82,19 @@ const CallerView = ({ phone }: { phone: string }) => {
 
     try {
       await pc.setRemoteDescription(remoteAnswerState);
-      console.log('remoteAnswer \n', remoteAnswerState);
     } catch (err) {
-      console.log('err is here \n', err);
     }
   };
 
   const iceCandidateHandler = async () => {
     const pc = pcRef.current;
     if (!pc || !iceCandidateState || !pc.remoteDescription) return;
-    console.log('icecandidate \n', iceCandidateState);
 
     try {
       for (const candidate of iceCandidateState) {
         await pc.addIceCandidate(candidate);
       }
     } catch (err) {
-      console.log('err in adding ice candidate \n', err);
     }
   };
 
@@ -144,7 +138,6 @@ const CallerView = ({ phone }: { phone: string }) => {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
-        console.log('1');
         const newAudioTrack = stream.getAudioTracks()[0];
         if (newAudioTrack) {
           localStreamRef.current.addTrack(newAudioTrack);

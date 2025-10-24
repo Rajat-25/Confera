@@ -9,8 +9,7 @@ import { urlPath } from '@repo/lib';
 
 const GeneralComponent = ({ message }: { message: string }) => {
   const route = useRouter();
-
-  if (message === 'No contact selected!') {
+  if (message !== 'Connecting ... !') {
     setTimeout(() => route.push(urlPath.dashboard), 1500);
   }
 

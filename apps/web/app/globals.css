@@ -1,2 +1,5 @@
 @import '@repo/tailwind-config/globals';
 
+body {
+  scrollbar-color: #4b5563 #1f2937;
+}

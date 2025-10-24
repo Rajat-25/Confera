@@ -1,7 +1,11 @@
 'use client';
-import { clearCallSliceState, clearChatSliceState, clearContactSliceState } from '@/store';
+import {
+  clearCallSliceState,
+  clearChatSliceState,
+  clearContactSliceState,
+} from '@/store';
 import { WS_CONST } from '@repo/lib';
-import { Button } from '@repo/ui/button';
+import { Button } from '@repo/ui';
 import { signOut } from 'next-auth/react';
 import { useDispatch } from 'react-redux';
 
@@ -13,7 +17,7 @@ const LogoutButton = () => {
     dispatch(clearChatSliceState());
 
     dispatch({ type: WS_CONST.DISCONNECT });
-    
+
     signOut({ redirectTo: '/' });
   };
 

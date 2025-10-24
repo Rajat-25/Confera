@@ -1,2 +1,2 @@
-export * from './wsToken.ts';
-export * from './constant.ts';
+export * from './wsToken';
+export * from './constant';

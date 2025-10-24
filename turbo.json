@@ -3,9 +3,9 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "^db:generate"],
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
       "env": ["DATABASE_URL"]
     },
     "lint": {
@@ -19,7 +19,13 @@
       "persistent": true
     },
     "@repo/db#generate": {
-      "cache": false
+      "cache": false,
+      "inputs": ["prisma/schema.prisma"],
+      "outputs": ["generated/prisma/**"]
+    },
+    "@repo/db#build": {
+      "dependsOn": ["@repo/db#generate"],
+      "outputs": ["dist/**"]
     },
     "@repo/db#migrate": {
       "cache": false,

@@ -1,6 +1,6 @@
 'use client';
 import { DeleteContact } from '@/app/actions/contact';
-import { Button } from '@repo/ui/button';
+import { Button } from '@repo/ui';
 import { FiTrash2 } from 'react-icons/fi';
 import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';

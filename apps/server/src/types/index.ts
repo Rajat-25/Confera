@@ -1,9 +1,17 @@
-import {
-  SendMsgPayloadType,
-  TypingPayloadType
-} from '@repo/types';
+import { SendMsgPayloadType, TypingPayloadType } from '@repo/types';
 
 import { WebSocket } from 'ws';
+
+export interface UserContextType {
+  userId: string;
+  phone: string;
+}
+
+declare module 'ws' {
+  interface WebSocket {
+    userContext?: UserContextType;
+  }
+}
 
 export type ContactsDbType = {
   phone: string;
@@ -96,7 +104,6 @@ export type UserStatusType = {
   ws: WebSocket;
   payload: { phone: string };
 };
-
 
 export type GeneralResponseType = {
   success: boolean;

@@ -1,23 +1,30 @@
+'use client';
 import { ChatContentPropsType } from '@repo/types';
+import { useEffect, useRef } from 'react';
 
 const ChatContent = ({ currChats, userId }: ChatContentPropsType) => {
+  const bottomRef = useRef<HTMLDivElement | null>(null);
   let content;
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [currChats?.length]);
 
   if (!currChats || currChats.length === 0) {
     content = <p className='text-center text-gray-400'>No messages yet</p>;
   } else {
     content = (
       <>
-        {currChats.map((chat) => {
+        {currChats.map((chat, idx) => {
           const isSender = chat.senderId === userId;
 
           return (
             <div
               key={chat.id}
-              className={`flex   ${isSender ? 'justify-end' : 'justify-start'}`}
+              className={`  flex   ${isSender ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`px-4 py-1  rounded-xl max-w-xs text-white ${
+                className={`px-3 py-2  rounded-2xl max-w-xs text-white ${
                   isSender ? 'bg-blue-600' : 'bg-gray-700'
                 }`}
               >
@@ -26,12 +33,13 @@ const ChatContent = ({ currChats, userId }: ChatContentPropsType) => {
             </div>
           );
         })}
+        <div ref={bottomRef}></div>
       </>
     );
   }
 
   return (
-    <div className='flex-1 h-full overflow-y-auto py-4 flex flex-col gap-y-2'>
+    <div className='h-full overflow-y-auto flex flex-col gap-y-2  pr-5  '>
       {content}
     </div>
   );

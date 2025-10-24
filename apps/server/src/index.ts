@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import http from 'http';
-import { WsCommunicationSingleton } from './ws-server.js';
+import { WsCommunicationSingleton } from './ws/ws-server.js';
 
 const PORT = process.env.PORT || 3005;
 const app = express();

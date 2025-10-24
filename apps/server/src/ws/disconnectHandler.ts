@@ -1,7 +1,6 @@
 import { WS_CONST } from '@repo/lib';
-import { DisconnectHandlerPropsType } from './types';
-import { GetContacts } from './utils/helper';
-
+import { DisconnectHandlerPropsType } from '../types';
+import { GetContacts } from '../utils/helper';
 
 export const disconnectHandler = async ({
   ws,
