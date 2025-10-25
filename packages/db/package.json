@@ -8,7 +8,7 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "prisma generate && tsc -p tsconfig.json",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev --skip-generate",
     "deploy": "prisma migrate deploy",

@@ -13,7 +13,7 @@ export const HomeSection = ({ children }: { children: ReactNode }) => {
       </div>
       <div className='bg-primary-bg relative col-span-6'>
         <Image
-          src='/home_img4.png'
+          src='/home.png'
           alt='home_page_image'
           fill
           className='object-cover'

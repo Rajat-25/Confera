@@ -12,7 +12,6 @@ export const authHandler = async ({
   try {
     const { jwtToken } = payload;
     const { success: tokenSuccess, decoded } = verifyWsToken(jwtToken);
-    console.log('---- \n', decoded, '---- \n', tokenSuccess);
 
     if (!tokenSuccess || !decoded) {
       ws.send(

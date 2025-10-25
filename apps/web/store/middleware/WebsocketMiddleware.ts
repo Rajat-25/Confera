@@ -49,7 +49,7 @@ export const websocketMiddleware: Middleware =
     const { type, payload: clientPayload } = action;
 
     if (type === CONNECT && !wsClient) {
-      console.log('WS Client Auth process started ...');
+      console.log('Client initiated connection request...');
 
       wsClient = new WebSocket(process.env.NEXT_PUBLIC_WS_SERVER_URL || '');
 
@@ -65,7 +65,7 @@ export const websocketMiddleware: Middleware =
 
         switch (type) {
           case AUTH_SUCCESS:
-            console.log('WS Client connection established ✔');
+            console.log('Client connection established ✔');
             store.dispatch(setWsConnectionStatus(true));
             break;
           case AUTH_FAILED:
@@ -141,17 +141,17 @@ export const websocketMiddleware: Middleware =
             break;
 
           case ERROR:
-            console.log('WS Client Error ❌', serverPayload.message);
+            console.log('Client Error ❌', serverPayload.message);
             break;
         }
       };
       wsClient.onclose = () => {
-        console.log('WS Client connection closed ❌');
+        console.log('Client connection closed ❌');
         store.dispatch(setWsConnectionStatus(false));
         wsClient = null;
       };
       wsClient.onerror = (err) => {
-        console.log('WS error:', err);
+        console.log('Client error:', err);
       };
     } else if (
       wsClient &&

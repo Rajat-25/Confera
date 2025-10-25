@@ -13,35 +13,33 @@ const WebSocketProvider = () => {
   const dispatch = useDispatch();
   const { CONNECT, DISCONNECT } = WS_CONST;
 
-  useEffect(() => {
-    const init = async () => {
-      console.log('Initiate WS Connection Request ');
+  const init = async () => {
+    try {
+      const { data } = await axios.get('/api/ws-token');
 
-      try {
-        const { data } = await axios.get('/api/ws-token');
-
-        if (!data?.success || !data?.token) {
-          console.log('unauthenticated');
-          return;
-        }
-
-        const token = data?.token;
-
-        dispatch({ type: CONNECT, payload: { jwtToken: token } });
-
-        const { exp } = jwtDecode<{ exp: number }>(token);
-        const now = Date.now();
-        const msUntilExpiry = exp * 1000 - now;
-
-        reconnectTimer = setTimeout(() => {
-          dispatch({ type: DISCONNECT });
-          init();
-        }, msUntilExpiry - 5000);
-      } catch (err) {
-        console.log('Client Auth initialisation failed:', err);
+      if (!data?.success || !data?.token) {
+        console.log('unauthenticated');
+        return;
       }
-    };
 
+      const token = data?.token;
+
+      dispatch({ type: CONNECT, payload: { jwtToken: token } });
+
+      const { exp } = jwtDecode<{ exp: number }>(token);
+      const now = Date.now();
+      const msUntilExpiry = exp * 1000 - now;
+
+      reconnectTimer = setTimeout(() => {
+        dispatch({ type: DISCONNECT });
+        init();
+      }, msUntilExpiry - 5000);
+    } catch (err) {
+      console.log('Auth failed');
+    }
+  };
+
+  useEffect(() => {
     if (status === 'authenticated') init();
 
     return () => {
@@ -49,7 +47,6 @@ const WebSocketProvider = () => {
       clearTimeout(reconnectTimer);
       dispatch({ type: DISCONNECT });
     };
-    
   }, [status]);
 
   return null;
