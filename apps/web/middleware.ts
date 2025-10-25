@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 export async function middleware(req: NextRequest) {
-  const token = req.cookies.get('authjs.session-token')?.value;
+  const token = req.cookies.get('__Secure-authjs.session-token')?.value;
 
   const { pathname } = req.nextUrl;
   const publicPaths = ['/', '/signin'];
