@@ -21,7 +21,7 @@
     "@repo/db#generate": {
       "cache": false,
       "inputs": ["prisma/schema.prisma"],
-      "outputs": ["generated/prisma/**"]
+      "outputs": ["generated/prisma/**","node_modules/.prisma/**"]
     },
     "@repo/db#build": {
       "dependsOn": ["@repo/db#generate"],
