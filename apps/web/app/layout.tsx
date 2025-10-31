@@ -16,6 +16,9 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: 'Confera',
   description: 'Real-Time video/chat application',
+  icons: {
+    icon: [{ url: '/favicon.png', sizes: '32x32', type: 'image/png' }],
+  },
 };
 
 export default function RootLayout({

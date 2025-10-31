@@ -9,16 +9,22 @@ const GoogleSignInButton = () => {
   const { dashboard } = urlPath;
 
   const signInHandler = async () => {
-    await signIn('google', { callbackUrl: dashboard });
+    console.log('inside signInHandler func ....');
+
+    try {
+      await signIn('google', { callbackUrl: dashboard });
+    } catch (err) {
+      console.log('Error in signInHandler ....', err);
+    }
   };
 
   return (
     <Button
       onClick={signInHandler}
-      className='w-fit flex items-center gap-x-4   px-6 py-3  text-xl font-medium text-secondary-text rounded-full border-4 border-primary-border transition-all duration-500  ease-in-out hover:scale-110 hover:text-primary-text bg-primary-bg'
+      className='w-fit border-primary-border hover:text-primary-text bg-primary-bg text-secondary-text flex items-center gap-x-4 py-2 px-4   md:px-6 md:py-3  text-lg md:text-xl font-medium md:font-semibold  rounded-full border-2  transition-all duration-500  ease-in-out hover:scale-110 '
     >
       Sign In with Google
-      <FcGoogle className='text-2xl' />
+      <FcGoogle className='text-xl md:text-2xl' />
     </Button>
   );
 };

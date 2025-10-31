@@ -26,6 +26,9 @@ const authOptions: NextAuthConfig = {
     async session({ session, user }) {
       const dbUser = await dbClient.user.findUnique({
         where: { email: user.email! },
+        select: {
+          phone: true,
+        },
       });
 
       session.user.phone = dbUser?.phone ?? null;

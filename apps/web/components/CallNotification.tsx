@@ -6,6 +6,7 @@ import {
   setIncomingCallState,
 } from '@/store';
 import { CALL_CONST, urlPath } from '@repo/lib';
+import { Call_GeneralPayloadType } from '@repo/types';
 import { Button } from '@repo/ui';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -22,14 +23,19 @@ const CallNotification = () => {
   );
 
   const acceptCall = () => {
+    console.log('inside acceptCall func ....');
+    
     if (!caller) return;
+
+    const callAcceptPayload: Call_GeneralPayloadType = {
+      receiverPhoneNo: caller,
+    };
 
     dispatch({
       type: CALL_ACCEPTED,
-      payload: {
-        receiverPhoneNo: caller,
-      },
+      payload: callAcceptPayload,
     });
+
     dispatch(setCurrentCallContact({ phone: caller }));
     dispatch(setIncomingCallState(false));
 
@@ -37,12 +43,18 @@ const CallNotification = () => {
   };
 
   const commonAction = (type: string) => {
+    console.log('inside commonAction func ....');
+
+    if (!caller) return;
+
+    const commonActionPayload: Call_GeneralPayloadType = {
+      receiverPhoneNo: caller,
+    };
+
     dispatch(setIncomingCallState(false));
     dispatch({
       type,
-      payload: {
-        receiverPhoneNo: caller,
-      },
+      payload: commonActionPayload,
     });
     dispatch(setCaller(null));
   };
@@ -50,6 +62,8 @@ const CallNotification = () => {
   const rejectCall = () => commonAction(CALL_REJECTED);
 
   useEffect(() => {
+    console.log('callTimeout effect running ....');
+
     if (!incomingCallState) return;
 
     const timer = setTimeout(() => commonAction(CALL_TIMEOUT), 15 * 1000);
@@ -57,7 +71,9 @@ const CallNotification = () => {
     return () => clearTimeout(timer);
   }, [incomingCallState]);
 
-  if (!incomingCallState) return null;
+  if (!incomingCallState) {
+    return null;
+  }
 
   return (
     incomingCallState && (

@@ -9,7 +9,7 @@ const Navbar = async () => {
 
   return (
     <div className='flex justify-center bg-primary-bg '>
-      <div className='z-10 border-4 border-primary-border rounded-full flex items-center justify-center mt-2 px-6 py-2   gap-x-6     '>
+      <div className='z-10 border-2 border-primary-border rounded-full flex items-center justify-center mt-2 px-6 py-2   gap-x-6     '>
         {session ? (
           <>
             <Link

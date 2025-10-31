@@ -1,8 +1,8 @@
 import { CHAT_CONST } from '@repo/lib';
-import { ChatServicePropsType } from '../types';
+import { ChatServicePropsType } from '@repo/types';
 import { chatHandler } from './chatHandler';
 import { typingHandler } from './typingHandler';
-import { userStatus } from './userStatus';
+import { userStatusHandler } from './userStatusHandler';
 
 export const chatService = async ({
   ws,
@@ -20,12 +20,13 @@ export const chatService = async ({
       sendMsgToClient,
     });
   } else if (type == USER_STATUS) {
-    await userStatus({
-      clientMapping,
-      payload,
+    userStatusHandler({
       ws,
+      payload,
+      clientMapping,
+      sendMsgToClient,
     });
   } else if (type === TYPING) {
-    typingHandler({ ws, clientMapping, payload });
+    typingHandler({ ws, clientMapping, payload, sendMsgToClient });
   }
 };

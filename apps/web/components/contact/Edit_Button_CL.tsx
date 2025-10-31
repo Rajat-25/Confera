@@ -1,6 +1,5 @@
 'use client';
 import { FiEdit2 } from 'react-icons/fi';
-
 import { setEditingContact } from '@/store';
 import { ContactType } from '@repo/types';
 import { Button } from '@repo/ui';
@@ -8,6 +7,7 @@ import { useDispatch } from 'react-redux';
 
 const EditButton_CL = ({ item }: { item: ContactType }) => {
   const dispatch = useDispatch();
+  
   return (
     <Button
       onClick={() => dispatch(setEditingContact(item))}

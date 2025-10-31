@@ -1,25 +1,39 @@
 import { verifyWsToken, WS_CONST } from '@repo/lib';
-import { ChatAuthPropsType_S } from '../types';
+import { authHandlerSchema, ChatAuthPropsType_S } from '@repo/types';
 import { GetContacts, GetUser } from '../utils/helper';
 
 export const authHandler = async ({
   ws,
   payload,
   clientMapping,
+  sendMsgToClient,
   broadcastStatusToContacts,
 }: ChatAuthPropsType_S) => {
   const { AUTH_SUCCESS, AUTH_FAILED, ERROR } = WS_CONST;
   try {
-    const { jwtToken } = payload;
+    const parsed = authHandlerSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      sendMsgToClient({
+        client: ws,
+        type: ERROR,
+        payload: {
+          message: 'invalid payload',
+        },
+      });
+      return;
+    }
+
+    const { jwtToken } = parsed.data;
+
     const { success: tokenSuccess, decoded } = verifyWsToken(jwtToken);
 
     if (!tokenSuccess || !decoded) {
-      ws.send(
-        JSON.stringify({
-          type: AUTH_FAILED,
-          payload: { message: 'Invalid/Expired Token' },
-        })
-      );
+      sendMsgToClient({
+        client: ws,
+        type: AUTH_FAILED,
+        payload: { message: 'Invalid/Expired Token' },
+      });
       ws.close();
       return;
     }
@@ -32,15 +46,15 @@ export const authHandler = async ({
     ] = await Promise.all([GetUser({ userId }), GetContacts(userId)]);
 
     if (!userSuccess || !userData || !contactSuccess) {
-      ws.send(
-        JSON.stringify({
-          type: ERROR,
-          payload: {
-            message: 'Internal server error',
-          },
-        })
-      );
-      return ws.close();
+      sendMsgToClient({
+        client: ws,
+        type: ERROR,
+        payload: {
+          message: 'Internal server error',
+        },
+      });
+      ws.close();
+      return;
     }
 
     const { phone } = userData;
@@ -52,12 +66,11 @@ export const authHandler = async ({
 
     clientMapping.set(phone!, ws);
 
-    ws.send(
-      JSON.stringify({
-        type: AUTH_SUCCESS,
-        payload: { message: 'WS Connection established successfully' },
-      })
-    );
+    sendMsgToClient({
+      client: ws,
+      type: AUTH_SUCCESS,
+      payload: { message: 'WS Connection established successfully' },
+    });
 
     if (contactData && contactData?.length) {
       broadcastStatusToContacts({
@@ -66,16 +79,16 @@ export const authHandler = async ({
         status: 'online',
       });
     }
-    console.log(`\nUser ${phone} Connected ✔ \n `);
+    console.log(`User ${phone} Connected ✔ \n `);
   } catch (err) {
     console.error('Auth error ❌:', err);
 
-    ws.send(
-      JSON.stringify({
-        type: AUTH_FAILED,
-        payload: { message: 'Internal server error' },
-      })
-    );
+    sendMsgToClient({
+      client: ws,
+      type: AUTH_FAILED,
+      payload: { message: 'Internal server error' },
+    });
+
     ws.close();
   }
 };

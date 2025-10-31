@@ -1,5 +1,5 @@
 import { CHAT_CONST } from '@repo/lib';
-import { ChatHandlerPropsType } from '../types';
+import { ChatHandlerPropsType, SendMsgSchema } from '@repo/types';
 import {
   createChat,
   createConversation,
@@ -17,16 +17,30 @@ export const chatHandler = async ({
   const { NEW_CONVERSATION, CHAT, CHAT_ERROR, UPDATE_CONVERSATION } =
     CHAT_CONST;
 
-  const { receiverPhone, text, conversationId } = payload;
+  const parsed = SendMsgSchema.safeParse(payload);
+
+  if (!parsed.success) {
+    sendMsgToClient({
+      client: ws,
+      type: CHAT_ERROR,
+      payload: {
+        message: 'invalid payload...',
+      },
+    });
+
+    return;
+  }
+  const { receiverPhone, text, conversationId } = parsed.data;
+
   const { userId: senderId, phone: senderPhone } = ws?.userContext!;
 
   if (!senderId || !senderPhone) {
-    ws.send(
-      JSON.stringify({
-        type: CHAT_ERROR,
-        payload: { message: 'Unauthorized' },
-      })
-    );
+    sendMsgToClient({
+      client: ws,
+      type: CHAT_ERROR,
+      payload: { message: 'Unauthorized' },
+    });
+
     return;
   }
 
@@ -37,32 +51,36 @@ export const chatHandler = async ({
       await GetUser({ phone: receiverPhone });
 
     if (!receiverUserSuccess || !receiverUserData) {
-      ws.send(
-        JSON.stringify({
-          type: CHAT_ERROR,
-          payload: { message: 'Invalid User' },
-        })
-      );
+      sendMsgToClient({
+        client: ws,
+        type: CHAT_ERROR,
+        payload: { message: 'Invalid User' },
+      });
+
       return;
     }
+
+    const UpdateCoversationArg = {
+      id: conversationId!,
+      lastMessage: text,
+      lastMessageAt: createdAt,
+      lastMessageById: senderId,
+    };
+
+    const ChatArg = {
+      senderId,
+      conversationId: conversationId!,
+      text,
+      createdAt,
+    };
 
     if (conversationId) {
       const [
         { success: chatSuccess, chat },
         { success: conversationSuccess, conversation },
       ] = await Promise.all([
-        createChat({
-          senderId,
-          conversationId,
-          text,
-          createdAt,
-        }),
-        updateConversation({
-          id: conversationId,
-          lastMessage: text,
-          lastMessageAt: createdAt,
-          lastMessageById: senderId,
-        }),
+        createChat(ChatArg),
+        updateConversation(UpdateCoversationArg),
       ]);
 
       const chatPayload = {
@@ -81,31 +99,39 @@ export const chatHandler = async ({
       };
 
       //Notify Sender
-      ws.send(JSON.stringify(getConversationPayload(receiverPhone)));
-      ws.send(JSON.stringify(chatPayload));
+
+      sendMsgToClient({ client: ws, ...getConversationPayload(receiverPhone) });
+      sendMsgToClient({ client: ws, ...chatPayload });
 
       //Notify Receiver
       if (receiverClient) {
-        sendMsgToClient(receiverClient, chatPayload);
-        sendMsgToClient(receiverClient, getConversationPayload(senderPhone));
+        sendMsgToClient({ client: receiverClient, ...chatPayload });
+        sendMsgToClient({
+          client: receiverClient,
+          ...getConversationPayload(senderPhone),
+        });
       }
       return;
     }
-    const { success: conversationSuccess, conversation } =
-      await createConversation({
-        lastMessage: text,
-        lastMessageAt: createdAt,
-        lastMessageById: senderId,
-        userId: senderId,
-        receiverUserId: receiverUserData.id,
-      });
 
-    const { success: chatSuccess, chat } = await createChat({
+    const CreateConversationArg = {
+      lastMessage: text,
+      lastMessageAt: createdAt,
+      lastMessageById: senderId,
+      userId: senderId,
+      receiverUserId: receiverUserData.id,
+    };
+    const { success: conversationSuccess, conversation } =
+      await createConversation(CreateConversationArg);
+
+    const Chat_Arg = {
       senderId,
-      conversationId: conversation?.id,
+      conversationId: conversation?.id!,
       text,
       createdAt,
-    });
+    };
+
+    const { success: chatSuccess, chat } = await createChat(Chat_Arg);
 
     const getConversationPayload = (phone: string) => {
       return {
@@ -123,21 +149,25 @@ export const chatHandler = async ({
     };
 
     //Notify Sender
-    ws.send(JSON.stringify(getConversationPayload(receiverPhone)));
-    ws.send(JSON.stringify(chatPayload));
+    sendMsgToClient({ client: ws, ...getConversationPayload(receiverPhone) });
+    sendMsgToClient({ client: ws, ...chatPayload });
 
     //Notify Receiver
     if (receiverClient) {
-      sendMsgToClient(receiverClient, getConversationPayload(senderPhone));
-      sendMsgToClient(receiverClient, chatPayload);
+      sendMsgToClient({
+        client: receiverClient,
+        ...getConversationPayload(senderPhone),
+      });
+      sendMsgToClient({ client: receiverClient, ...chatPayload });
     }
     return;
   } catch (err) {
-    return ws.send(
-      JSON.stringify({
-        type: CHAT_ERROR,
-        payload: { message: 'Internal server error' },
-      })
-    );
+    console.log('Error in chatHandler', err);
+
+    sendMsgToClient({
+      client: ws,
+      type: CHAT_ERROR,
+      payload: { message: 'Internal server error' },
+    });
   }
 };

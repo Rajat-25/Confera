@@ -1,5 +1,5 @@
 'use client';
-import { phoneSchema } from '@/utils';
+import { phoneSchema } from '@repo/types';
 import { urlPath } from '@repo/lib';
 import { Button } from '@repo/ui';
 import { FormEvent, useActionState, useEffect } from 'react';
@@ -11,8 +11,11 @@ import { signOut } from 'next-auth/react';
 export default function AddContactForm() {
   const [formState, formAction] = useActionState(AddUserPhoneNo, null);
 
-  useEffect(() => {
+  const phoneStatus = () => {
+    console.log('inside phoneStatus func ....');
+
     if (!formState) return;
+
     const { success, message } = formState;
     if (success) {
       toast.success(message);
@@ -20,9 +23,17 @@ export default function AddContactForm() {
     } else {
       toast.error(message);
     }
+  };
+
+  useEffect(() => {
+    console.log('phoneStatus effect runnning...');
+
+    phoneStatus();
   }, [formState]);
 
   const handleClientValidation = (e: FormEvent<HTMLFormElement>) => {
+    console.log('inside handleClientValidation func ....');
+
     const formData = new FormData(e.currentTarget);
     const phone = formData.get('phone')?.toString() || '';
     const { success } = phoneSchema.safeParse(phone);

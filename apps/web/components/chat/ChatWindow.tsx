@@ -1,7 +1,12 @@
 'use client';
 import { clearCurrentChat, RootState, setCurrentChat } from '@/store';
 import { CHAT_CONST } from '@repo/lib';
-import { ChatWindowProps, SendMsgPayloadType, StatusType } from '@repo/types';
+import {
+  ChatWindowProps,
+  PhonePayloadType,
+  SendMsgPayloadType,
+  StatusType,
+} from '@repo/types';
 import { Button } from '@repo/ui';
 
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
@@ -33,6 +38,8 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
   const fullName = currentChatContact?.fullName;
 
   const sendMsgHandler = () => {
+    console.log('inside sendMsg Handler ....');
+
     if (!msg || !wsConnectionStatus || !phone) return;
     const conversation = mappedConversation?.[phone];
 
@@ -48,48 +55,70 @@ const ChatWindow = ({ GetUserChat, userId }: ChatWindowProps) => {
   };
 
   const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log('inside onChangeHandler func ...');
+
     setMsg(e.target.value);
 
     if (!phone) return;
 
     if (typingRef.current) clearTimeout(typingRef.current);
 
+    const typingPayload: PhonePayloadType = {
+      phone,
+    };
+
     typingRef.current = setTimeout(() => {
       dispatch({
         type: TYPING,
-        payload: { phone },
+        payload: typingPayload,
       });
     }, 200);
   };
 
   const getMyChats = async (phone: string) => {
+    console.log('inside getMyChats  func ...');
+
     const { success, chats } = await GetUserChat(phone);
     if (success && chats && chats.length !== 0) {
       dispatch(setCurrentChat(chats));
     }
   };
 
+  const getUserStatus = () => {
+    console.log('inside getUserStaus function ....');
+
+    if (!phone) return;
+
+    const userStatusPayload: PhonePayloadType = { phone };
+    dispatch({ type: USER_STATUS, payload: userStatusPayload });
+  };
+
   useEffect(() => {
+    console.log('user online status effect running ...');
+
     if (!contactStatus || !phone) return;
     setIsUserOnline(contactStatus[phone] ?? 'offline');
   }, [contactStatus, phone]);
 
   useEffect(() => {
-    dispatch(clearCurrentChat());
+    console.log('getmyChats effect running ...');
 
     if (!phone) return;
-
+    dispatch(clearCurrentChat());
     getMyChats(phone);
   }, [phone]);
 
   useEffect(() => {
+    console.log('typing effect running ...');
+
     setIsTyping(isUserTyping);
   }, [isUserTyping]);
 
   useEffect(() => {
+    console.log('getUserStatus effect running ...');
+
     if (!wsConnectionStatus || !phone) return;
-    const userStatusPayload = { type: USER_STATUS, payload: { phone } };
-    dispatch(userStatusPayload);
+    getUserStatus();
   }, [phone, wsConnectionStatus]);
 
   if (!currentChatContact) {

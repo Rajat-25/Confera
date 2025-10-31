@@ -1,10 +1,8 @@
-'use client';
-import { clearCallSliceState, RootState } from '@/store';
 import { CALL_CONST, urlPath } from '@repo/lib';
-import { StartLocalStreamProps } from '@repo/types';
+import { Call_GeneralPayloadType, StartLocalStreamProps } from '@repo/types';
 import { Button } from '@repo/ui';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { Dispatch, RefObject, SetStateAction } from 'react';
 import {
   FaMicrophone,
   FaMicrophoneSlash,
@@ -12,96 +10,44 @@ import {
   FaVideoSlash,
 } from 'react-icons/fa';
 import { MdCallEnd } from 'react-icons/md';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
-const CallerView = ({ phone }: { phone: string }) => {
-  const { ADD_ICE_CANDIDATE, CREATE_OFFER, CALL_ENDED } = CALL_CONST;
+export type CallWindowPropsType = {
+  phone: string;
+  pcRef: RefObject<RTCPeerConnection | null>;
+  remoteVideoRef: RefObject<HTMLVideoElement | null>;
+  localVideoRef: RefObject<HTMLVideoElement | null>;
+  localStreamRef: RefObject<MediaStream | null>;
+
+  micOn: boolean;
+  camOn: boolean;
+  setMicOn: Dispatch<SetStateAction<boolean>>;
+  setCamOn: Dispatch<SetStateAction<boolean>>;
+  offerHandler: () => Promise<void> | void;
+};
+
+export const CallWindow = ({
+  phone,
+  pcRef,
+  remoteVideoRef,
+  localVideoRef,
+  localStreamRef,
+  micOn,
+  camOn,
+  setMicOn,
+  setCamOn,
+  offerHandler,
+}: CallWindowPropsType) => {
+  const { CALL_ENDED } = CALL_CONST;
   const dispatch = useDispatch();
   const route = useRouter();
-
-  const [micOn, setMicOn] = useState(false);
-  const [camOn, setCamOn] = useState(false);
-
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const localIceCandidates = useRef<RTCIceCandidate[]>([]);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-
-  const { remoteAnswerState, iceCandidateState, callState } = useSelector(
-    (state: RootState) => state.call_slice
-  );
-
-  const initializeConnection = () => {
-    pcRef.current = new RTCPeerConnection();
-    const pc = pcRef.current;
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        localIceCandidates.current.push(event.candidate);
-      }
-    };
-
-    pc.onnegotiationneeded = () => {
-      offerHandler();
-    };
-
-    pc.onicegatheringstatechange = () => {
-      if (pc.iceGatheringState === 'complete') {
-        dispatch({
-          type: ADD_ICE_CANDIDATE,
-          payload: {
-            candidates: localIceCandidates.current,
-            receiver: phone,
-          },
-        });
-        localIceCandidates.current = [];
-      }
-    };
-  };
-
-  const offerHandler = async () => {
-    const pc = pcRef.current;
-    if (!pc) return;
-
-    try {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      dispatch({
-        type: CREATE_OFFER,
-        payload: { sdp: pc.localDescription, receiver: phone },
-      });
-
-    } catch (err) {
-    }
-  };
-
-  const addRemoteAnswer = async () => {
-    const pc = pcRef.current;
-    if (!pc || !remoteAnswerState) return;
-
-    try {
-      await pc.setRemoteDescription(remoteAnswerState);
-    } catch (err) {
-    }
-  };
-
-  const iceCandidateHandler = async () => {
-    const pc = pcRef.current;
-    if (!pc || !iceCandidateState || !pc.remoteDescription) return;
-
-    try {
-      for (const candidate of iceCandidateState) {
-        await pc.addIceCandidate(candidate);
-      }
-    } catch (err) {
-    }
-  };
 
   const startLocalStream = async ({
     enableAudio,
     enableVideo,
   }: StartLocalStreamProps) => {
+    console.log('inside startLocalStream func ....');
+
     try {
       if (!localStreamRef.current) {
         localStreamRef.current = await navigator.mediaDevices.getUserMedia({
@@ -114,10 +60,14 @@ const CallerView = ({ phone }: { phone: string }) => {
       return localStreamRef.current;
     } catch (err) {
       alert('Please allow mic/camera permissions in your browser.');
+      console.log('Error in startLocalStream', err);
+      return null;
     }
   };
 
   const handleMicClick = async () => {
+    console.log('inside handleMicClick func ....');
+
     const pc = pcRef.current;
     if (!pc) return;
 
@@ -129,9 +79,11 @@ const CallerView = ({ phone }: { phone: string }) => {
       if (stream) {
         stream.getTracks().forEach((track) => pc.addTrack(track, stream));
         setMicOn(true);
+        await offerHandler();
       }
       return;
     }
+
     const audioTracks = localStreamRef.current.getAudioTracks();
     if (audioTracks.length === 0) {
       try {
@@ -144,8 +96,10 @@ const CallerView = ({ phone }: { phone: string }) => {
           pc.addTrack(newAudioTrack, localStreamRef.current);
         }
         setMicOn(true);
+        await offerHandler();
       } catch (err) {
         alert('Please allow Microphone Permisssion !!!!');
+        console.log('Error in handleMicClick', err);
       }
     } else {
       audioTracks.forEach((t) => (t.enabled = !micOn));
@@ -154,7 +108,10 @@ const CallerView = ({ phone }: { phone: string }) => {
   };
 
   const handleCamClick = async () => {
+    console.log('inside handleCamClick func ....');
+
     const pc = pcRef.current;
+
     if (!pc) return;
 
     if (!localStreamRef.current) {
@@ -165,10 +122,11 @@ const CallerView = ({ phone }: { phone: string }) => {
       if (stream) {
         stream.getTracks().forEach((track) => pc.addTrack(track, stream));
         setCamOn(true);
+        await offerHandler();
       }
-
       return;
     }
+
     const videoTracks = localStreamRef.current.getVideoTracks();
     if (videoTracks.length === 0) {
       try {
@@ -181,8 +139,10 @@ const CallerView = ({ phone }: { phone: string }) => {
           pc.addTrack(newVideoTrack, localStreamRef.current);
         }
         setCamOn(true);
+        await offerHandler();
       } catch (err) {
         alert('Please allow Camera Permisssion !!!!');
+        console.log('Error in handleCamClick', err);
       }
     } else {
       videoTracks.forEach((t) => (t.enabled = !camOn));
@@ -191,66 +151,18 @@ const CallerView = ({ phone }: { phone: string }) => {
   };
 
   const endCallHandler = () => {
+    console.log('inside endCallHandler func ....');
+
+    const endCallPayload: Call_GeneralPayloadType = {
+      receiverPhoneNo: phone,
+    };
+
     dispatch({
       type: CALL_ENDED,
-      payload: {
-        receiverPhoneNo: phone,
-      },
+      payload: endCallPayload,
     });
     route.push(urlPath.dashboard);
   };
-
-  const connectionCleanUp = () => {
-    if (pcRef.current) {
-      pcRef.current.onicecandidate = null;
-      pcRef.current.ontrack = null;
-      pcRef.current.getSenders().forEach((sender) => sender.track?.stop());
-      pcRef.current.close();
-      pcRef.current = null;
-    }
-
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => {
-        track.stop();
-      });
-      localStreamRef.current = null;
-    }
-
-    [localVideoRef].forEach((ref) => {
-      if (ref.current?.srcObject) {
-        const stream = ref.current.srcObject as MediaStream;
-        stream.getTracks().forEach((track) => track.stop());
-        ref.current.srcObject = null;
-      }
-    });
-
-    setMicOn(false);
-    setCamOn(false);
-  };
-
-  useEffect(() => {
-    if (!pcRef.current) initializeConnection();
-
-    return () => {
-      connectionCleanUp();
-      dispatch(clearCallSliceState());
-    };
-  }, []);
-
-  useEffect(() => {
-    addRemoteAnswer();
-  }, [remoteAnswerState]);
-
-  useEffect(() => {
-    iceCandidateHandler();
-  }, [iceCandidateState]);
-
-  useEffect(() => {
-    if (callState === 'ended') {
-      connectionCleanUp();
-      dispatch(clearCallSliceState());
-    }
-  }, [callState]);
 
   return (
     <div className=' h-full p-4 bg-primary-bg grid grid-cols-12 gap-x-4 '>
@@ -293,10 +205,16 @@ const CallerView = ({ phone }: { phone: string }) => {
         </div>
       </div>
       <div className='bg-tertiary-bg text-tertiary-text col-span-6 rounded-xl p-2 flex flex-col items-center justify-center gap-y-2 '>
-        {phone}
+        <div className='font-semibold text-xl text-tertiary-text'>{phone}</div>
+        <video
+          className='w-full h-96 rounded-2xl object-cover'
+          autoPlay
+          playsInline
+          ref={remoteVideoRef}
+        />
       </div>
     </div>
   );
 };
 
-export default CallerView;
+export default CallWindow;

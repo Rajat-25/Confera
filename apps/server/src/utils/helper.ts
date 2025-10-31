@@ -1,17 +1,35 @@
 import { dbClient } from '@repo/db';
 import {
+  ConversationType,
+  CreateChatPayloadPropsType,
+  CreateChatSchema,
+  CreateConversationSchema,
+  CreateConversationType,
   GetContactsResponseType,
+  GetUserParamsSchema,
   GetUserParamsType,
   GetUserResponseType,
-} from '../types';
+  phoneSchema,
+  UpdateConversationSchema,
+  UserIdSchema,
+  UserIdType,
+} from '@repo/types';
 
 export const GetContacts = async (
-  userId: string
+  userId: UserIdType
 ): Promise<GetContactsResponseType> => {
+  console.log('inside GetContacts func ....');
+
+  const parsed = UserIdSchema.safeParse(userId);
+
+  if (!parsed.success) {
+    return { success: false, message: 'invalid payload' };
+  }
+
   try {
     const contacts = await dbClient.contact.findMany({
       where: {
-        userId,
+        userId: parsed.data,
       },
       select: {
         phone: true,
@@ -24,15 +42,25 @@ export const GetContacts = async (
       data: contacts,
     };
   } catch (err) {
-    return { success: false, message: 'Internal server error' };
+    console.log('Error in getContacts func ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
 };
 
 export const GetUser = async (
   props: GetUserParamsType
 ): Promise<GetUserResponseType> => {
+  console.log('inside GetUser func ....');
+
+  const parsed = GetUserParamsSchema.safeParse(props);
+
+  if (!parsed.success) {
+    return { success: false, message: 'invalid payload' };
+  }
+
   try {
-    const { userId, phone } = props;
+    const { userId, phone } = parsed.data;
     const user = await dbClient.user.findFirst({
       where: {
         OR: [
@@ -47,23 +75,25 @@ export const GetUser = async (
       ? { success: true, data: user, message: 'User fetched successfully' }
       : { success: false, message: 'Invalid user' };
   } catch (err) {
-    return { success: false, message: 'Internal server error' };
+    console.log('Error in getUser func ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
 };
 
-export const createChat = async ({
-  senderId,
-  conversationId,
-  text,
-  createdAt,
-}: any) => {
+export const createChat = async (props: CreateChatPayloadPropsType) => {
+  console.log('inside createChat func ....');
+
+  const parsed = CreateChatSchema.safeParse(props);
+
+  if (!parsed.success) {
+    return { success: false, message: 'invalid payload' };
+  }
+
   try {
     const chat = await dbClient.chat.create({
       data: {
-        senderId,
-        conversationId,
-        text,
-        createdAt,
+        ...parsed.data,
       },
       select: {
         id: true,
@@ -75,17 +105,29 @@ export const createChat = async ({
     });
     return { success: true, message: 'Chat created successfully', chat };
   } catch (err) {
-    return { success: false, message: 'Internal server error' };
+    console.log('Error in createChat func ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
 };
 
-export const createConversation = async ({
-  lastMessage,
-  lastMessageAt,
-  lastMessageById,
-  userId,
-  receiverUserId,
-}: any) => {
+export const createConversation = async (props: CreateConversationType) => {
+  console.log('inside createConversation func ....');
+
+  const parsed = CreateConversationSchema.safeParse(props);
+
+  if (!parsed.success) {
+    return { success: false, message: 'invalid payload' };
+  }
+
+  const {
+    lastMessageAt,
+    lastMessageById,
+    receiverUserId,
+    userId,
+    lastMessage,
+  } = parsed.data;
+
   try {
     const conversation = await dbClient.conversation.create({
       data: {
@@ -110,16 +152,22 @@ export const createConversation = async ({
       conversation,
     };
   } catch (err) {
-    return { success: false, message: 'Internal server error' };
+    console.log('Error in createConversation func ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
 };
 
-export const updateConversation = async ({
-  lastMessage,
-  lastMessageAt,
-  lastMessageById,
-  id,
-}: any) => {
+export const updateConversation = async (props: ConversationType) => {
+  console.log('inside updateConversation func ....');
+
+  const parsed = UpdateConversationSchema.safeParse(props);
+
+  if (!parsed.success) {
+    return { success: false, message: 'invalid_payload' };
+  }
+
+  const { lastMessage, lastMessageAt, lastMessageById, id } = parsed.data;
   try {
     const conversation = await dbClient.conversation.update({
       where: { id },
@@ -136,15 +184,25 @@ export const updateConversation = async ({
       conversation,
     };
   } catch (err) {
-    return { success: false, message: 'Internal server error' };
+    console.log('Error in updateConversation func ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
 };
 
 export const isUserValid = async (phoneNo: string) => {
+  console.log('inside isUserValid func ....');
+
+  const parsed = phoneSchema.safeParse(phoneNo);
+
+  if (!parsed.success) {
+    return { success: false, message: 'invalid_payload' };
+  }
+
   try {
     const user = await dbClient.user.findFirst({
       where: {
-        phone: phoneNo,
+        phone: parsed.data,
       },
       select: {
         id: true,
@@ -157,6 +215,8 @@ export const isUserValid = async (phoneNo: string) => {
       return { success: false, message: 'invalid_user' };
     }
   } catch (err) {
+    console.log('Error in isUserValid func ....', err);
+
     return {
       success: false,
       message: 'something_went_wrong',

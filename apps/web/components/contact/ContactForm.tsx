@@ -1,9 +1,9 @@
 'use client';
 
 import { clearEditingContact, RootState } from '@/store';
-import { contactSchema } from '@/utils';
+import { contactSchema } from '@repo/types';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { FaEnvelope, FaPhone, FaUser } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -23,17 +23,34 @@ export default function ContactForm() {
     phone: '',
   });
 
+  const isContactData = () => {
+    console.log('inside isContactData func ....');
+
+    if (!editingContact) return;
+    setFormData({ ...editingContact, email: editingContact.email ?? '' });
+  };
+
   useEffect(() => {
-    if (editingContact) {
-      setFormData({ ...editingContact, email: editingContact.email ?? '' });
-    }
+    console.log('\n isContactData effect running...');
+
+    isContactData();
   }, [editingContact]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    return () => {
+      dispatch(clearEditingContact());
+    };
+  }, []);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log('inside handleChange func ....');
+
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('inside handleSubmit func ....');
+
     e.preventDefault();
 
     const result = contactSchema.safeParse(formData);
@@ -57,6 +74,8 @@ export default function ContactForm() {
       }
     } catch (err) {
       toast.error('Failed to save contact');
+      
+      console.log('Error in handleSubmit ....', err);
     }
   };
 

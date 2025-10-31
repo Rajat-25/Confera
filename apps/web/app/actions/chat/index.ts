@@ -1,18 +1,19 @@
 'use server';
 
-import { phoneSchema } from '@/utils';
 import { dbClient } from '@repo/db';
 import {
   GetAllConversationsIdResponse,
   GetAllConversationsResponse,
   GetUserChatResponse,
-  MappedConversationType
+  MappedConversationType,
+  phoneSchema,
 } from '@repo/types';
 import { isUserAuthorized } from '../shared';
 
-
 export const GetAllMappedConversation =
   async (): Promise<GetAllConversationsIdResponse> => {
+    console.log('inside getAllMappedConversation func ....');
+
     const { success: authSuccess, data } = await isUserAuthorized();
 
     if (!authSuccess || !data?.userId) {
@@ -59,37 +60,40 @@ export const GetAllMappedConversation =
         data: dbMappedConversation,
       };
     } catch (err) {
-      return { success: false, message: 'Internal Server error', data: null };
+      console.log('Error in getAllMappedConversation ....', err);
+
+      return { success: false, message: 'Something went wrong', data: null };
     }
   };
 
 export const GetUserChat = async (
   phone: string
 ): Promise<GetUserChatResponse> => {
+  console.log('inside getUserChat func ....');
+
   const { success, data } = await isUserAuthorized();
 
-  if (!success || !data?.userId) {
+  if (!success || !data) {
     return { success: false, message: 'User not authorized' };
   }
 
   const { userId } = data;
 
-  const { success: schemaSuccess, data: parsedData } =
-    phoneSchema.safeParse(phone);
+  const parsed = phoneSchema.safeParse(phone);
 
-  if (!schemaSuccess) {
+  if (!parsed.success) {
     return { success: false, message: 'Invalid phone number' };
   }
 
-  const contact = await dbClient.user.findUnique({
-    where: { phone: parsedData },
-  });
-
-  if (!contact) {
-    return { success: false, message: 'Contact not found' };
-  }
-
   try {
+    const contact = await dbClient.user.findUnique({
+      where: { phone: parsed.data },
+    });
+
+    if (!contact) {
+      return { success: false, message: 'Contact not found' };
+    }
+
     const chats = await dbClient.chat.findMany({
       where: {
         conversation: {
@@ -116,15 +120,19 @@ export const GetUserChat = async (
 
     return { success: true, chats, message: 'Chats fetched successfully' };
   } catch (err) {
-    return { success: false, message: 'Internal Server error' };
+    console.log('Error in getUserChat ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
 };
 
 export const GetAllConversations =
   async (): Promise<GetAllConversationsResponse> => {
+    console.log('inside getAllConversations func ....');
+
     const { success, data } = await isUserAuthorized();
 
-    if (!success || !data?.userId) {
+    if (!success || !data) {
       return { success: false, message: 'User not authorized' };
     }
     const { userId } = data;
@@ -154,6 +162,8 @@ export const GetAllConversations =
         message: 'Chats fetched successfully',
       };
     } catch (err) {
-      return { success: false, message: 'Internal Server error' };
+      console.log('Error in getAllConversations ....', err);
+
+      return { success: false, message: 'Something went wrong' };
     }
   };

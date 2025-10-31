@@ -6,7 +6,7 @@ import {
   DeleteContactSchemaType,
   EditContactSchema,
   EditContactSchemaType,
-} from '@/utils';
+} from '@repo/types';
 import { dbClient } from '@repo/db';
 import {
   GetAllMappedContactsResponseType,
@@ -18,17 +18,19 @@ import { isUserAuthorized } from '../shared';
 
 export const GetAllMappedContacts =
   async (): Promise<GetAllMappedContactsResponseType> => {
+    console.log('inside getAllMappedContacts func ....');
+
+    const { success } = await isUserAuthorized();
+
+    if (!success) {
+      return { success: false, message: 'User not authorized', data: null };
+    }
+
     try {
-      const { success, data } = await isUserAuthorized();
-
-      if (!success || !data?.userId) {
-        return { success: false, message: 'User not authorized', data: null };
-      }
-
       const { success: contactSuccess, data: contactData } =
         await GetUserContacts();
 
-      if (!contactSuccess || !contactData) {
+      if (!contactSuccess) {
         return {
           success: false,
           message: 'Error fetching contacts',
@@ -44,49 +46,66 @@ export const GetAllMappedContacts =
           fullName: contact.fullName,
         };
 
-        return Object.assign(mappedContacts, { [contact.phone]: data });
+        Object.assign(mappedContacts, { [contact.phone]: data });
       });
 
       return {
         success: true,
-        message: 'Success',
+        message: 'Successfully fetched mappedContacts',
         data: mappedContacts,
       };
     } catch (err) {
-      return { success: false, message: 'Error While fetching data', data: null };
+      console.log('Error in getAllMappedContacts ....', err);
+
+      return {
+        success: false,
+        message: 'Error While fetching data',
+        data: null,
+      };
     }
   };
 
 export const AddContact = async (formData: any) => {
+  console.log('inside addContact func ....');
+
   const { success, data } = await isUserAuthorized();
 
-  if (!success || !data?.userId) {
+  if (!success || !data) {
     return { success: false, message: 'User not authorized' };
   }
-  const { userId } = data;
-  const result = contactSchema.safeParse(formData);
 
-  if (!result.success) {
-    return { success: false, errors: result.error.issues };
+  const { userId } = data;
+  const parsed = contactSchema.safeParse(formData);
+
+  if (!parsed.success) {
+    return { success: false, errors: parsed.error.issues };
   }
 
-  await dbClient.contact.create({
-    data: {
-      ...result.data,
-      user: {
-        connect: { id: userId },
+  try {
+    await dbClient.contact.create({
+      data: {
+        ...parsed.data,
+        user: {
+          connect: { id: userId },
+        },
       },
-    },
-  });
+    });
 
-  revalidatePath('/contacts');
-  return { success: true, message: 'Contact added successfully' };
+    revalidatePath('/contacts');
+    return { success: true, message: 'Contact added successfully' };
+  } catch (err) {
+    console.log('Error in addContact ....', err);
+
+    return { success: false, message: 'Something went wrong' };
+  }
 };
 
 export const EditContact = async (val: EditContactSchemaType) => {
+  console.log('inside editContact func ....');
+
   const { success, data } = await isUserAuthorized();
 
-  if (!success || !data?.userId) {
+  if (!success || !data) {
     return { success: false, message: 'User not authorized' };
   }
   const { userId } = data;
@@ -97,54 +116,74 @@ export const EditContact = async (val: EditContactSchemaType) => {
     return { success: false, errors: parsed.error.issues };
   }
 
-  await dbClient.contact.update({
-    where: {
-      id: parsed.data.id,
-      userId,
-    },
-    data: {
-      fullName: parsed.data.fullName,
-      email: parsed.data.email || null,
-      phone: parsed.data.phone,
-    },
-  });
+  try {
+    await dbClient.contact.update({
+      where: {
+        id: parsed.data.id,
+        userId,
+      },
+      data: {
+        fullName: parsed.data.fullName,
+        email: parsed.data.email || null,
+        phone: parsed.data.phone,
+      },
+    });
 
-  revalidatePath('/contacts');
-  return { success: true, message: 'Contact updated successfully' };
+    revalidatePath('/contacts');
+    return { success: true, message: 'Contact updated successfully' };
+  } catch (err) {
+    console.log('Error in editContact ....', err);
+
+    return { success: false, message: 'Something went wrong' };
+  }
 };
 
 export const DeleteContact = async (val: DeleteContactSchemaType) => {
+  console.log('inside deleteContact func ....');
+
   const { success, data } = await isUserAuthorized();
 
-  if (!success || !data?.userId) {
+  if (!success || !data) {
     return { success: false, message: 'User not authorized' };
   }
   const { userId } = data;
 
   const parsed = DeleteContactSchema.safeParse(val);
+
   if (!parsed.success) {
     return { success: false, errors: parsed.error.issues };
   }
 
-  const contact = await dbClient.contact.findFirst({
-    where: { id: parsed.data.id, userId },
-  });
+  try {
+    const contact = await dbClient.contact.findFirst({
+      where: { id: parsed.data.id, userId },
+      select: {
+        id: true,
+      },
+    });
 
-  if (!contact) {
-    return { success: false, message: 'Not found or unauthorized' };
+    if (!contact) {
+      return { success: false, message: 'Contact Not found' };
+    }
+
+    await dbClient.contact.delete({ where: { id: contact.id } });
+
+    revalidatePath('/contacts');
+
+    return { success: true, message: 'Contact deleted successfully' };
+  } catch (err) {
+    console.log('Error in deleteContact ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
-
-  await dbClient.contact.delete({ where: { id: contact.id } });
-
-  revalidatePath('/contacts');
-
-  return { success: true, message: 'Contact deleted successfully' };
 };
 
 export const GetUserContacts = async (): Promise<GetUserContactsResponse> => {
+  console.log('inside getUserContacts func ....');
+
   const { success, data } = await isUserAuthorized();
 
-  if (!success || !data?.userId) {
+  if (!success || !data) {
     return { success: false, message: 'User not authorized', data: null };
   }
   const { userId } = data;
@@ -167,6 +206,12 @@ export const GetUserContacts = async (): Promise<GetUserContactsResponse> => {
       message: 'Contacts fetched successfully',
     };
   } catch (err) {
-    return { success: false, message: 'Error while fetching contacts', data: null };
+    console.log('Error in getUserContacts ....', err);
+
+    return {
+      success: false,
+      message: 'Something went wrong',
+      data: null,
+    };
   }
 };

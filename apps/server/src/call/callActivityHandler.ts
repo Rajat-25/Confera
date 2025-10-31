@@ -1,6 +1,6 @@
 import { CALL_CONST } from '@repo/lib';
+import { Call_GeneralSchema, CallActivityHandlerPropsType } from '@repo/types';
 import { isUserValid } from '../utils/helper';
-import { CallActivityHandlerPropsType } from '../types';
 
 export const callActivityHandler = async ({
   type,
@@ -8,6 +8,7 @@ export const callActivityHandler = async ({
   payload,
   clientMapping,
   callStatus,
+  sendMsgToClient,
 }: CallActivityHandlerPropsType) => {
   const {
     USER_OFFLINE,
@@ -21,7 +22,23 @@ export const callActivityHandler = async ({
     CALL_ERROR,
   } = CALL_CONST;
   if (type === INITIATE_CALL) {
-    const { receiverPhoneNo } = payload;
+    console.log('\n call state ...', callStatus);
+
+    const parsed = Call_GeneralSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      sendMsgToClient({
+        client: ws,
+        type: CALL_ERROR,
+        payload: {
+          message: 'invalid payload',
+        },
+      });
+      return;
+    }
+
+    const { receiverPhoneNo } = parsed.data;
+
     const { success: userValidStatus, message } =
       await isUserValid(receiverPhoneNo);
 
@@ -30,106 +47,144 @@ export const callActivityHandler = async ({
       const receiverCallStatus = callStatus.get(receiverPhoneNo);
 
       if (!receiverClient) {
-        ws.send(
-          JSON.stringify({
-            type: USER_OFFLINE,
-            payload: { status: 'user_offline' },
-          })
-        );
+        sendMsgToClient({
+          client: ws,
+          type: USER_OFFLINE,
+          payload: { status: 'user_offline' },
+        });
       } else if (receiverCallStatus) {
-        ws.send(
-          JSON.stringify({
-            type: USER_BUSY,
-            payload: { status: 'user_busy' },
-          })
-        );
+        sendMsgToClient({
+          client: ws,
+          type: USER_BUSY,
+          payload: { status: 'user_busy' },
+        });
       } else if (!receiverCallStatus) {
-        receiverClient.send(
-          JSON.stringify({
-            type: INCOMING_CALL,
-            payload: {
-              sender: ws.userContext?.phone,
-            },
-          })
-        );
+        sendMsgToClient({
+          client: receiverClient,
+          type: INCOMING_CALL,
+          payload: {
+            sender: ws.userContext?.phone,
+          },
+        });
       }
     } else {
       if (message === 'invalid_user') {
-        ws.send(
-          JSON.stringify({
-            type: CALL_REJECTED,
-            payload: { status: 'invalid_user' },
-          })
-        );
-      } else {
-        ws.send(
-          JSON.stringify({
-            type: CALL_REJECTED,
-            payload: { status: 'call_error' },
-          })
-        );
-      }
-    }
-    return;
-  } else if (type === CALL_ACCEPTED) {
-    const { receiverPhoneNo } = payload;
-    const receiverClient = clientMapping.get(receiverPhoneNo);
-    if (receiverClient) {
-      callStatus.set(ws.userContext?.phone!, 'inCall');
-      callStatus.set(ws.userContext?.phone!, 'inCall');
-      receiverClient.send(
-        JSON.stringify({
-          type: CALL_ACCEPTED,
-          payload: {
-            status: 'accepted',
-          },
-        })
-      );
-    }
-
-    return;
-  } else if (type === CALL_REJECTED) {
-    const { receiverPhoneNo } = payload;
-    const receiverClient = clientMapping.get(receiverPhoneNo);
-
-    if (receiverClient) {
-      receiverClient.send(
-        JSON.stringify({
+        sendMsgToClient({
+          client: ws,
           type: CALL_REJECTED,
-          payload: {
-            status: 'rejected',
-          },
-        })
-      );
-    }
-
-    return;
-  } else if (type === CALL_TIMEOUT) {
-    const { receiverPhoneNo } = payload;
-    const receiverClient = clientMapping.get(receiverPhoneNo);
-
-    if (receiverClient) {
-      receiverClient.send(
-        JSON.stringify({
+          payload: { status: 'invalid_user' },
+        });
+      } else {
+        sendMsgToClient({
+          client: ws,
           type: CALL_REJECTED,
           payload: { status: 'call_error' },
-        })
-      );
+        });
+      }
     }
-    return;
+  } else if (type === CALL_ACCEPTED) {
+    const parsed = Call_GeneralSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      sendMsgToClient({
+        client: ws,
+        type: CALL_ERROR,
+        payload: {
+          message: 'invalid payload',
+        },
+      });
+      return;
+    }
+
+    const { receiverPhoneNo } = parsed.data;
+    const receiverClient = clientMapping.get(receiverPhoneNo);
+    if (receiverClient) {
+      callStatus.set(ws.userContext?.phone!, 'inCall');
+      callStatus.set(ws.userContext?.phone!, 'inCall');
+      sendMsgToClient({
+        client: receiverClient,
+        type: CALL_ACCEPTED,
+        payload: {
+          status: 'accepted',
+        },
+      });
+    }
+  } else if (type === CALL_REJECTED) {
+    const parsed = Call_GeneralSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      sendMsgToClient({
+        client: ws,
+        type: CALL_ERROR,
+        payload: {
+          message: 'invalid payload',
+        },
+      });
+
+      return;
+    }
+
+    const { receiverPhoneNo } = parsed.data;
+    const receiverClient = clientMapping.get(receiverPhoneNo);
+
+    if (receiverClient) {
+      sendMsgToClient({
+        client: receiverClient,
+        type: CALL_REJECTED,
+        payload: {
+          status: 'rejected',
+        },
+      });
+    }
+  } else if (type === CALL_TIMEOUT) {
+    const parsed = Call_GeneralSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      sendMsgToClient({
+        client: ws,
+        type: CALL_ERROR,
+        payload: {
+          message: 'invalid payload',
+        },
+      });
+
+      return;
+    }
+    const { receiverPhoneNo } = parsed.data;
+    const receiverClient = clientMapping.get(receiverPhoneNo);
+
+    if (receiverClient) {
+      sendMsgToClient({
+        client: receiverClient,
+        type: CALL_REJECTED,
+        payload: { status: 'call_error' },
+      });
+    }
   } else if (type === CALL_ENDED) {
-    const { receiverPhoneNo } = payload;
+    const parsed = Call_GeneralSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      sendMsgToClient({
+        client: ws,
+        type: CALL_ERROR,
+        payload: {
+          message: 'invalid payload',
+        },
+      });
+      return;
+    }
+
+    const { receiverPhoneNo } = parsed.data;
     const receiverClient = clientMapping.get(receiverPhoneNo);
 
     callStatus.delete(payload.receiverPhoneNo);
     callStatus.delete(ws.userContext?.phone!);
     if (receiverClient) {
-      receiverClient.send(
-        JSON.stringify({
-          type: CALL_ENDED,
-        })
-      );
+      sendMsgToClient({
+        client: receiverClient,
+        type: CALL_ENDED,
+        payload: { message: 'call_ended' },
+      });
     }
-    return;
   }
 };

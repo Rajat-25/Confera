@@ -1,34 +1,46 @@
 import { CALL_CONST } from '@repo/lib';
-import { createAnswerPropsType } from '../types';
+import { createAnswerPropsType, CreateAnswerSchema } from '@repo/types';
 
 export const createAnswerHandler = async ({
   ws,
   payload,
   clientMapping,
+  sendMsgToClient,
 }: createAnswerPropsType) => {
-  const { sdp, receiver } = payload;
-  const receiverClient = clientMapping.get(receiver);
-
   const { CREATE_ANSWER, CALL_ERROR } = CALL_CONST;
 
-  if (receiverClient && receiverClient.readyState === WebSocket.OPEN) {
-    receiverClient.send(
-      JSON.stringify({
-        type: CREATE_ANSWER,
-        payload: {
-          sdp,
-          sender: ws.userContext?.phone,
-        },
-      })
-    );
+  const parsed = CreateAnswerSchema.safeParse(payload);
+
+  if (!parsed.success) {
+    sendMsgToClient({
+      client: ws,
+      type: CALL_ERROR,
+      payload: {
+        message: 'invalid payload',
+      },
+    });
+    return;
+  }
+  
+  const { sdp, receiver } = parsed.data;
+  const receiverClient = clientMapping.get(receiver);
+
+  if (receiverClient ) {
+    sendMsgToClient({
+      client: receiverClient,
+      type: CREATE_ANSWER,
+      payload: {
+        sdp,
+        sender: ws.userContext?.phone,
+      },
+    });
   } else {
-    ws.send(
-      JSON.stringify({
-        type: CALL_ERROR,
-        payload: {
-          message: 'Internal server error',
-        },
-      })
-    );
+    sendMsgToClient({
+      client: ws,
+      type: CALL_ERROR,
+      payload: {
+        message: 'Internal server error',
+      },
+    });
   }
 };

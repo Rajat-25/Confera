@@ -7,10 +7,10 @@ const page = () => {
     <HomeSection>
       <Link
         href={'/signin'}
-        className='w-fit flex items-center gap-x-4   px-6 py-3  text-xl font-medium text-secondary-text rounded-full border-4 border-primary-border transition-all duration-500  ease-in-out hover:scale-110 hover:text-primary-text bg-primary-bg'
+        className='w-fit border-primary-border text-secondary-text hover:text-primary-text bg-primary-bg flex items-center gap-x-4  py-2 px-4 md:px-6 md:py-3  text-lg md:text-xl font-medium md:font-semibold rounded-full border-2   transition-all duration-500  ease-in-out hover:scale-110 '
       >
         Get Started
-        <LuArrowRight className='text-2xl' />
+        <LuArrowRight className='text-xl md:text-2xl' />
       </Link>
     </HomeSection>
   );

@@ -1,11 +1,13 @@
 import { CALL_CONST, CHAT_CONST, WS_CONST } from '@repo/lib';
-import { GenPayloadType } from '@repo/types';
+import {
+  broadcastStatusToContactsPropsType,
+  SendMsgToClientType,
+} from '@repo/types';
 import { Server } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
 import { callService } from '../call';
 import { chatService } from '../chat';
-import { authHandler } from '../chat/authHandler';
-import { broadcastStatusToContactsPropsType } from '../types';
+import { authHandler } from './authHandler';
 import { disconnectHandler } from './disconnectHandler';
 
 const { AUTH_INIT, ERROR, DISCONNECT } = WS_CONST;
@@ -31,6 +33,7 @@ export class WsCommunicationSingleton {
               ws,
               payload,
               clientMapping: this.clientMapping,
+              sendMsgToClient: this.sendMsgToClient.bind(this),
               broadcastStatusToContacts:
                 this.broadcastStatusToContacts.bind(this),
             });
@@ -55,24 +58,27 @@ export class WsCommunicationSingleton {
               payload,
               callStatus: this.callStatus,
               clientMapping: this.clientMapping,
+              sendMsgToClient: this.sendMsgToClient.bind(this),
             });
           } else if (type == DISCONNECT) {
             await disconnectHandler({
               ws,
               broadcastStatusToContacts:
                 this.broadcastStatusToContacts.bind(this),
+              sendMsgToClient: this.sendMsgToClient.bind(this),
             });
           }
-        } catch (err: any) {
+        } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           console.error('WS Error ❌:', msg);
 
-          return ws.send(
-            JSON.stringify({
-              type: ERROR,
-              payload: { message: 'Internal Server error' },
-            })
-          );
+          this.sendMsgToClient({
+            client: ws,
+            type: ERROR,
+            payload: { message: 'Internal Server error' },
+          });
+
+          return;
         }
       });
 
@@ -92,10 +98,11 @@ export class WsCommunicationSingleton {
     });
   }
 
-  private sendMsgToClient(receiverClient: WebSocket, payload: GenPayloadType) {
-    if (receiverClient.readyState === WebSocket.OPEN) {
-      receiverClient.send(JSON.stringify(payload));
+  private sendMsgToClient({ client, payload, type }: SendMsgToClientType) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ type, payload }));
     }
+    return;
   }
 
   private broadcastStatusToContacts({
@@ -105,16 +112,15 @@ export class WsCommunicationSingleton {
   }: broadcastStatusToContactsPropsType) {
     contacts.forEach((contact: any) => {
       const receiverClient = this.clientMapping.get(contact.phone);
-      if (receiverClient && receiverClient?.readyState === WebSocket.OPEN) {
-        receiverClient.send(
-          JSON.stringify({
-            type: USER_STATUS,
-            payload: {
-              statusOf: phone,
-              status,
-            },
-          })
-        );
+      if (receiverClient) {
+        this.sendMsgToClient({
+          client: receiverClient,
+          type: USER_STATUS,
+          payload: {
+            statusOf: phone,
+            status,
+          },
+        });
       }
     });
     return;

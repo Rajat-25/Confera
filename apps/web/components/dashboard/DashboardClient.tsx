@@ -6,7 +6,11 @@ import {
   setCurrentChatContact,
 } from '@/store';
 import { CALL_CONST, urlPath } from '@repo/lib';
-import { ContactType, DashboardClientProps } from '@repo/types';
+import {
+  Call_GeneralPayloadType,
+  ContactType,
+  DashboardClientProps,
+} from '@repo/types';
 import { FiUser } from 'react-icons/fi';
 
 import Link from 'next/link';
@@ -25,29 +29,40 @@ const DashboardClient = ({ contacts }: DashboardClientProps) => {
   const [inputText, setInputText] = useState<string>('');
 
   const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log('inside onChangeHandler func ....');
+
     setInputText(e.target.value);
   };
 
   const chatActionHandler = (contact: ContactType) => {
+    console.log('inside chatActionHandler func ....');
+
     dispatch(setCurrentChatContact(contact));
     route.push(urlPath.chat);
   };
 
   const callActionHandler = (contact: ContactType) => {
+    console.log('inside callActionHandler func ....');
+
     dispatch(setCurrentCallContact({ phone: contact.phone }));
     dispatch(setCallInitiatedBy('Me'));
     dispatch(setCallState('initiated'));
+
+    const initiateCallPayload: Call_GeneralPayloadType = {
+      receiverPhoneNo: contact.phone,
+    };
+
     dispatch({
       type: INITIATE_CALL,
-      payload: {
-        receiverPhoneNo: contact.phone,
-      },
+      payload: initiateCallPayload,
     });
 
     route.push(urlPath.call);
   };
 
   const filteredContacts = contacts?.filter((item: ContactType) => {
+    console.log('inside filteredContacts func ....');
+
     return (
       item.fullName.toLowerCase().includes(inputText.toLowerCase()) ||
       item.phone.toLowerCase().includes(inputText.toLowerCase())

@@ -2,12 +2,12 @@
 import { DeleteContact } from '@/app/actions/contact';
 import { Button } from '@repo/ui';
 import { FiTrash2 } from 'react-icons/fi';
-import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 
 const DeleteButton_Cl = ({ id }: { id: string }) => {
-  const dispatch = useDispatch();
   const handleDelete = async () => {
+    console.log('inside handleDelete func ....');
+
     try {
       const res = await DeleteContact({ id });
 
@@ -19,6 +19,7 @@ const DeleteButton_Cl = ({ id }: { id: string }) => {
       toast.success('Contact deleted successfully');
     } catch (err) {
       toast.error('Something went wrong');
+      console.log('Error in handleDelete func ....', err);
     }
   };
 

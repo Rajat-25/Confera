@@ -1,6 +1,6 @@
+import { JwtVerifyType } from '@repo/types';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { JwtVerifyType } from '@repo/types';
 
 type SignWSTokenPropsType = {
   userId: string;
@@ -10,6 +10,8 @@ type SignWSTokenPropsType = {
 const secret = process.env.WS_JWT_SECRET || '';
 
 export function signWsToken(data: SignWSTokenPropsType) {
+  console.log('inside signWsToken func ....');
+
   const { userId, expiresIn = '15m' } = data;
   const now = Math.floor(Date.now() / 1000);
   const jti = uuidv4();
@@ -27,11 +29,15 @@ export const verifyWsToken = (
   success: boolean;
   decoded?: JwtVerifyType | null;
 } => {
+  console.log('inside verifyWsToken func ....');
+
   try {
     const decoded = jwt.verify(token, secret) as JwtVerifyType;
 
     return { success: true, decoded };
   } catch (err) {
+    console.log('Error in  verifyWsToken ....', err);
+
     return { success: false, decoded: null };
   }
 };

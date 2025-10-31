@@ -7,6 +7,8 @@ const ChatContent = ({ currChats, userId }: ChatContentPropsType) => {
   let content;
 
   useEffect(() => {
+    console.log('scrollToBottom effect running ...');
+
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [currChats?.length]);
 

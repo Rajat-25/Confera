@@ -1,5 +1,6 @@
 'use client';
 import { WS_CONST } from '@repo/lib';
+import { connectSchemaType } from '@repo/types';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { useSession } from 'next-auth/react';
@@ -13,18 +14,25 @@ const WebSocketProvider = () => {
   const dispatch = useDispatch();
   const { CONNECT, DISCONNECT } = WS_CONST;
 
-  const init = async () => {
+  const initiateSocketConnection = async () => {
+    console.log('inside initiateSocketConnection ....');
+
     try {
       const { data } = await axios.get('/api/ws-token');
 
       if (!data?.success || !data?.token) {
-        console.log('unauthenticated');
+        console.log('unauthenticated ....');
         return;
       }
 
       const token = data?.token;
 
-      dispatch({ type: CONNECT, payload: { jwtToken: token } });
+      const connectPayload: connectSchemaType = {
+        type: CONNECT,
+        payload: { jwtToken: token },
+      };
+
+      dispatch(connectPayload);
 
       const { exp } = jwtDecode<{ exp: number }>(token);
       const now = Date.now();
@@ -32,18 +40,19 @@ const WebSocketProvider = () => {
 
       reconnectTimer = setTimeout(() => {
         dispatch({ type: DISCONNECT });
-        init();
+        initiateSocketConnection();
       }, msUntilExpiry - 5000);
     } catch (err) {
-      console.log('Auth failed');
+      console.log('Error in initiateSocketConnection  ....', err);
     }
   };
 
   useEffect(() => {
-    if (status === 'authenticated') init();
+    console.log('webSocket effect runnning ....');
+    if (status === 'authenticated') initiateSocketConnection();
 
     return () => {
-      console.log('WebSocket Disconnected');
+      console.log('webSocket Disconnected ....');
       clearTimeout(reconnectTimer);
       dispatch({ type: DISCONNECT });
     };

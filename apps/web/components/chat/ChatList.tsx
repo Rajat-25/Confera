@@ -28,11 +28,15 @@ const ChatList = ({
   );
 
   const onClickHandlder = (data: CurrentChatContactType) => {
+    console.log('inside onClickHandlder  func ....');
+
     if (!data) return;
     dispatch(setCurrentChatContact(data));
   };
 
   useEffect(() => {
+    console.log('mapped contact/conversation effect running ....');
+
     if (dbMappedContacts && dbMappedConversations) {
       dispatch(setConversationMap(dbMappedConversations));
       dispatch(setMappedContacts(dbMappedContacts));
@@ -40,6 +44,8 @@ const ChatList = ({
   }, [dbMappedContacts, dbMappedConversations]);
 
   useEffect(() => {
+    console.log('clearChatState effect running ....');
+
     return () => {
       dispatch(clearChatSliceState());
     };

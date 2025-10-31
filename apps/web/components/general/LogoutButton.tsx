@@ -11,7 +11,10 @@ import { useDispatch } from 'react-redux';
 
 const LogoutButton = () => {
   const dispatch = useDispatch();
+
   const logoutHandler = () => {
+    console.log('inside logoutHandler func ....');
+    
     dispatch(clearContactSliceState());
     dispatch(clearCallSliceState());
     dispatch(clearChatSliceState());

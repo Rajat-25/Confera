@@ -1,14 +1,16 @@
 'use server';
 
-import { phoneSchema } from '@/utils';
+import { IsUserExistSchema, IsUserExistType, phoneSchema } from '@repo/types';
 import { dbClient } from '@repo/db';
-import { GeneralResponseType, IsUserExistPropsType } from '@repo/types';
+import { GeneralResponseType } from '@repo/types';
 import { isUserAuthorized } from '../shared';
 
 export const getUserPhoneNo = async () => {
+  console.log('inside getUserPhoneNo func ....');
+
   const { success, data } = await isUserAuthorized();
 
-  if (!success || !data?.userId) {
+  if (!success || !data) {
     return { success: false, message: 'User not authorized' };
   }
   const userId = data.userId;
@@ -21,31 +23,36 @@ export const getUserPhoneNo = async () => {
       message: ' Phone number fetched successfully',
     };
   } catch (err) {
-    return { success: false, message: 'Internal Server error' };
+    console.log('Error in getUserPhoneNo func ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
 };
 
-export const isUserExist = async ({
-  phone,
-  email,
-}: IsUserExistPropsType): Promise<GeneralResponseType> => {
+export const isUserExist = async (
+  props: IsUserExistType
+): Promise<GeneralResponseType> => {
+  console.log('inside isUserExist func ....');
+
   const { success, data } = await isUserAuthorized();
 
-  if (!success || !data?.userId) {
+  if (!success || !data) {
     return { success: false, message: 'User not authorized' };
   }
-  const userId = data.userId;
 
-  if (!phone && !email) {
+  const parsed = IsUserExistSchema.safeParse(props);
+
+  if (!parsed.success) {
     return { success: false, message: 'Phone or Email required' };
   }
+  const { email, phone } = parsed.data;
 
   try {
     const user = await dbClient.user.findFirst({
       where: {
         OR: [{ phone }, { email }],
       },
-      select: { id: true },
+      select: { id: true,email:true },
     });
 
     return user?.id
@@ -55,33 +62,36 @@ export const isUserExist = async ({
         }
       : { success: false, message: 'User does not exist' };
   } catch (err) {
-    return { success: false, message: 'Internal Server error' };
+    console.log('Error in isUserExist func ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
 };
 
 export const AddUserPhoneNo = async (prevState: any, formData: FormData) => {
   const { success, data } = await isUserAuthorized();
 
-  if (!success || !data?.userId) {
+  if (!success || !data) {
     return { success: false, message: 'User not authorized' };
   }
 
   const userId = data.userId;
+  const parsed = phoneSchema.safeParse(formData.get('phone'));
 
-  const result = phoneSchema.safeParse(formData.get('phone'));
-
-  if (!result.success) {
+  if (!parsed.success) {
     return { success: false, message: 'Invalid phone number' };
   }
 
   try {
-    const user = await dbClient.user.update({
+    await dbClient.user.update({
       where: { id: userId },
-      data: { phone: result.data },
+      data: { phone: parsed.data },
     });
 
     return { success: true, message: 'Phone added successfully' };
   } catch (err) {
-    return { success: false, message: 'Phone already exists or DB error' };
+    console.log('Error while adding phoneNo ....', err);
+
+    return { success: false, message: 'Something went wrong' };
   }
 };
