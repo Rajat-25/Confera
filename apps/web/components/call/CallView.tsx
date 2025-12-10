@@ -212,13 +212,56 @@ const CallView = ({ phone }: { phone: string }) => {
   };
 
   useEffect(() => {
-    console.log('initiateConnection effect running ...');
+    let camPerm: PermissionStatus | null = null;
+    let micPerm: PermissionStatus | null = null;
 
-    if (!pcRef.current) initiateConnection();
+    const handlePermissionChange = () => {
+      console.log('Permission change detected — setting reload flag');
+      sessionStorage.setItem('permissionReload', 'true');
+    };
 
+    const setupPermissionListeners = async () => {
+      try {
+        camPerm = await navigator.permissions.query({
+          name: 'camera' as PermissionName,
+        });
+        micPerm = await navigator.permissions.query({
+          name: 'microphone' as PermissionName,
+        });
+
+        camPerm.onchange = handlePermissionChange;
+        micPerm.onchange = handlePermissionChange;
+      } catch (err) {
+        console.log('Permissions API not supported', err);
+      }
+    };
+
+    setupPermissionListeners();
+
+   
     return () => {
-      connectionCleanUp();
-      dispatch(clearCallSliceState());
+      if (camPerm) camPerm.onchange = null;
+      if (micPerm) micPerm.onchange = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log('initiateConnection effect running ...');
+    const isPermissionReload = sessionStorage.getItem('permissionReload');
+    if (isPermissionReload) {
+      sessionStorage.removeItem('permissionReload'); 
+    }
+
+    if (!pcRef.current) {
+      initiateConnection();
+    }
+    return () => {
+      if (!isPermissionReload) {
+        connectionCleanUp();
+        dispatch(clearCallSliceState());
+      } else {
+        console.log('Skipping cleanup due to permission reload...');
+      }
     };
   }, []);
 

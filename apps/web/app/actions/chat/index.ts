@@ -9,10 +9,21 @@ import {
   phoneSchema,
 } from '@repo/types';
 import { isUserAuthorized } from '../shared';
+import {
+  activeServerActions,
+  serverActionCounter,
+  serverActionDuration,
+  serverActionErrorCounter,
+} from '@/monitoring/metrics';
 
 export const GetAllMappedConversation =
   async (): Promise<GetAllConversationsIdResponse> => {
     console.log('inside getAllMappedConversation func ....');
+
+    const labels = { action: 'GetAllMappedConversation' };
+    const end = serverActionDuration.startTimer(labels);
+    serverActionCounter.inc(labels);
+    activeServerActions.inc(labels);
 
     const { success: authSuccess, data } = await isUserAuthorized();
 
@@ -60,9 +71,12 @@ export const GetAllMappedConversation =
         data: dbMappedConversation,
       };
     } catch (err) {
-      console.log('Error in getAllMappedConversation ....', err);
-
+      console.error('Error in getAllMappedConversation ....', err);
+      serverActionErrorCounter.inc(labels);
       return { success: false, message: 'Something went wrong', data: null };
+    } finally {
+      activeServerActions.dec(labels);
+      end();
     }
   };
 
@@ -70,6 +84,11 @@ export const GetUserChat = async (
   phone: string
 ): Promise<GetUserChatResponse> => {
   console.log('inside getUserChat func ....');
+
+  const labels = { action: 'GetUserChat' };
+  const end = serverActionDuration.startTimer(labels);
+  serverActionCounter.inc(labels);
+  activeServerActions.inc(labels);
 
   const { success, data } = await isUserAuthorized();
 
@@ -120,15 +139,22 @@ export const GetUserChat = async (
 
     return { success: true, chats, message: 'Chats fetched successfully' };
   } catch (err) {
-    console.log('Error in getUserChat ....', err);
-
+    console.error('Error in getUserChat ....', err);
+    serverActionErrorCounter.inc(labels);
     return { success: false, message: 'Something went wrong' };
+  } finally {
+    activeServerActions.dec(labels);
+    end();
   }
 };
 
 export const GetAllConversations =
   async (): Promise<GetAllConversationsResponse> => {
     console.log('inside getAllConversations func ....');
+    const labels = { action: 'GetAllConversations' };
+    const end = serverActionDuration.startTimer(labels);
+    serverActionCounter.inc(labels);
+    activeServerActions.inc(labels);
 
     const { success, data } = await isUserAuthorized();
 
@@ -162,8 +188,11 @@ export const GetAllConversations =
         message: 'Chats fetched successfully',
       };
     } catch (err) {
-      console.log('Error in getAllConversations ....', err);
-
+      console.error('Error in getAllConversations ....', err);
+      serverActionErrorCounter.inc(labels);
       return { success: false, message: 'Something went wrong' };
+    } finally {
+      activeServerActions.dec(labels);
+      end();
     }
   };

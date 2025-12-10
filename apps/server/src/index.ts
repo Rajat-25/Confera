@@ -2,8 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import http from 'http';
 import { WsCommunicationSingleton } from './ws/ws-server.js';
-
-const PORT = process.env.PORT;
+const PORT = process.env.SERVER_PORT;
 const app = express();
 const server = http.createServer(app);
 

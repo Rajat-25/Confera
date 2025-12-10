@@ -36,7 +36,7 @@ export const verifyWsToken = (
 
     return { success: true, decoded };
   } catch (err) {
-    console.log('Error in  verifyWsToken ....', err);
+    console.error('Error in  verifyWsToken ....', err);
 
     return { success: false, decoded: null };
   }

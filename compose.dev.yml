@@ -1,0 +1,50 @@
+services:
+  db_service:
+    image: postgres:17-alpine
+    container_name: confera_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - confera_db_v:/var/lib/postgresql/data
+    env_file:
+      - ./packages/db/.env
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+  prometheus_service:
+    image: prom/prometheus:latest
+    container_name: confera_prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  dev_service:
+    image: confera_dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: confera_dev
+    ports:
+      - '3000:3000'
+      - '3005:3005'
+    depends_on:
+      db_service:
+        condition: service_healthy
+    working_dir: /main
+    command: sh -c "npm run dev"
+    develop:
+      watch:
+        - action: sync
+          path: ./apps
+          target: /main/apps
+          ignore:
+            - node_modules/
+        - action: sync
+          path: ./packages
+          target: /main/packages
+          ignore:
+            - node_modules/
+volumes:
+  confera_db_v:
